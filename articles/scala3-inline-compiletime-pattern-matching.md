@@ -709,10 +709,10 @@ inline def year[T <: Int | String]: Year =
   inline erasedValue[T] match
     case _: Int =>
       inline if constValue[T] >= 1901 & constValue[T] <= 2155 then constValue[T]
-    else error("Only values in the range 1901 to 2155 can be passed to the YEAR type.")
+      else error("Only values in the range 1901 to 2155 can be passed to the YEAR type.")
     case _: String =>
       inline if constValue[Matches[T, """^(19[0-9]{2}|20[0-9]{2}|21[0-4][0-9]|2155)$"""]] then constValue[T]
-    else error("Only values in the range 1901 to 2155 can be passed to the YEAR type.")
+      else error("Only values in the range 1901 to 2155 can be passed to the YEAR type.")
 ```
 
 しかしこれは機能しません。
