@@ -3,6 +3,7 @@ title: "FeralとAWS SAMを使ってScalaでLambda関数を作成する"
 emoji: "♦️"
 type: "tech"
 topics: ["Scala", "Typelevel", "aws", "awslambda", "awssam"]
+publication_name: nextbeat
 published: false # 公開設定（falseにすると下書き）
 ---
 
