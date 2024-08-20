@@ -8,7 +8,7 @@ published: false # 公開設定（falseにすると下書き）
 
 # はじめに
 
-2023年10月26日に、Serverless Framework v4が発表され、新しくライセンスが導入されることが発表されました。v4自体は2024年5月21日からベータ版としてリリースされ、利用できるようになりました。
+2023年10月26日に、Serverless Framework v4が発表され、新しくライセンスが導入されることが発表されました。v4自体は2024年5月21日からベータ版としてリリースされ、利用できるようになっていました。
 
 https://www.serverless.com/blog/serverless-framework-v4-a-new-model
 
@@ -18,11 +18,17 @@ Serverless Framework v4は、Serverless Framework v3とは異なり、オープ�
 
 リリースブログとCLI上では個人の開発者や小規模企業、非営利団体は無料で利用できると記載されていましたが今回の変更でServerless Framework意外の選択肢も試してみようと思いこの記事を書きました。
 
+いわゆる備忘録のようなものです。
+
+:::message
+備忘録であるため使用するライブラリなどに対する詳細な説明は行いません。参考にした記事のリンクを記載しておりますので詳細な内容に関してはそちらを参照していただくか、公式のドキュメントを参照してください。
+:::
+
 この記事では、TypelevelのライブラリであるFeralを使用してScalaでAWS Lambda関数を作成する方法を紹介します。また、AWS SAMを使って作成した関数のデプロイを行います。
 
 本記事では以下の内容についての構築と説明を行います。
 
-- Feralでの複数のLambda関数の作成
+- FeralでのLambda関数の作成
 - AWS SAMを使ったデプロイ
 
 :::message
@@ -33,7 +39,10 @@ Scalaのクロスプラットフォーム性(JVM, JS, Native)を活かして、J
 
 ## Feralとは
 
-Feralは、Cats Effectを使ってScalaでサーバーレス関数を書き、クラウドにデプロイするためのフレームワークで、JVMとJavaScriptの両方のランタイムをターゲットにしているTypelevelのプロジェクトです。
+Feralは、Cats Effectを使ってScalaでサーバーレス関数を書き、FaaS(Function as a Service)基盤に適合させるライブラリであり、追加の便利なsbtコマンドを提供するプラグインで、JVMとJavaScriptの両方のランタイムをターゲットにしているTypelevelのプロジェクトです。
+
+https://typelevel.org/
+https://github.com/typelevel/feral
 
 Feralの特徴や使い方については、以下の記事に詳しく記載されておりますので、参考にしてください。
 
@@ -58,6 +67,8 @@ https://zenn.dev/k_tana/articles/2023-08_how-to-use-of-aws-sam
 ## AWS SAMを使用したプロジェクトの作成
 
 まずはAWS SAM CLIをインストールします。
+
+https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/install-sam-cli.html
 
 ```shell
 brew install aws-sam-cli
@@ -354,11 +365,19 @@ AWS SAMは、`CodeUri`にLambda関数のコードが格納されているディ�
 
 デプロイを行う前に変更した`template.yaml`が正しいかを確認します。
 
+`sam validate`コマンドを実行することで`template.yaml`の構文チェックを行えます。
+
+https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-validate.html
+
 ```shell
 sam validate
 ```
 
 問題がなければ、次にビルドを行います。
+
+`sam build`コマンドを実行すると、Lambda関数のビルドが設定どおりに動作するか確認できます。今回ビルド自体はFeralを使用して行うのでここのコマンドは実行しても何も起こりません。
+
+しかし、ビルドを行うことによって後続のデプロイなどに必要なファイルが`.aws-sam`下に生成されますので、`sam build`は実行しておきましょう。
 
 ```shell
 sam build
@@ -382,7 +401,7 @@ sam local invoke HelloWorldFunction --event events/event.json
 
 :::message
 ローカル環境でテストを行う際には、Dockerが必要です。事前にDockerをインストールしておいてください。
-また、Macの場合にDockerを起動しているのにエラーが出る場合は、以下のコマンドを実行する。
+また、Macの場合にDockerを起動しているのにエラーが出る場合は、以下のコマンドを実行すれば解消できます。
 ```shell
 sudo ln -s ~/.docker/run/docker.sock /var/run/docker.sock
 ```
@@ -506,5 +525,18 @@ Deploy this changeset? [y/N]: y
 
 ![](/images/scala-feral-lambda-function/test-result.png)
 
-すみません。こちらご存知だったら教えていただけると嬉しいのですが、Feralを使用した場合と`cats.effect.unsafe.implicits.global`を使用てして`unsafeRunSync`や`unsafeRunAndForget`を使用した場合の違いって何でしょうか？
-FeralのIOLambdaを見るとランタイムは同様に`IORuntime.global`を使用していたのでどう違うのかなあと思った感じです！
+以上で、FeralとAWS SAMを使ってScalaでLambda関数を作成する方法を紹介しました。
+
+## まとめ
+
+今回AWS SAMを初めて触ってみましたが、思ったよりも簡単にLambda関数のデプロイが簡単に行えることがわかりました。今回Scalaを使用して独自にビルドなどを行いましたがTypescriptなどの言語を使用する場合は、AWS SAMのテンプレートを使用するだけでLambda関数を作成することができるためより簡単にLambda関数を作成することができると思います。
+また、ローカル環境でのLambda関数のテストも簡単に行うことができました。普段Serverless Frameworkを使用している時はLocalstackを使用しての検証も行なっていたのでここも問題なく動作するのか見てみたいですね。
+
+まだ、単純なLambda関数の作成しか試していませんが、他にも色々なものに対応しているみたいなので本格的にServerless FrameworkからAWS SAMに移行してみるのもいいかもしれません。
+
+https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/reference-sam-connector.html
+
+直近でサイボウズさんもAWS SAMを採用しているという記事を見かけたので、今後AWS SAMを使っていくことが増えるかもしれませんね。
+
+https://zenn.dev/cybozu_ept/articles/migrate-from-serverless-framework
+
