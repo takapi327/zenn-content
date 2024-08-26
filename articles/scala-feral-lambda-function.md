@@ -4,7 +4,8 @@ emoji: "♦️"
 type: "tech"
 topics: ["Scala", "Typelevel", "aws", "awslambda", "awssam"]
 publication_name: nextbeat
-published: false # 公開設定（falseにすると下書き）
+published: true
+published_at: 2024-09-02 10:00
 ---
 
 # はじめに
@@ -17,7 +18,7 @@ Serverless Framework v4は、Serverless Framework v3とは異なり、オープ�
 
 前年度に年間収益が200万ドルを超えた組織がv4を利用する場合に対象となるみたいですが、200万ドル以下だったかどうかの審査はないため、自己申告のようです。
 
-リリースブログとCLI上では個人の開発者や小規模企業、非営利団体は無料で利用できると記載されていましたが今回の変更でServerless Framework意外の選択肢も試してみようと思いこの記事を書きました。
+リリースブログとCLI上では個人の開発者や小規模企業、非営利団体は無料で利用できると記載されていましたが今回の変更でServerless Framework以外の選択肢も試してみようと思いこの記事を書きました。
 
 いわゆる備忘録のようなものです。
 
@@ -25,7 +26,7 @@ Serverless Framework v4は、Serverless Framework v3とは異なり、オープ�
 備忘録であるため使用するライブラリなどに対する詳細な説明は行いません。参考にした記事のリンクを記載しておりますので詳細な内容に関してはそちらを参照していただくか、公式のドキュメントを参照してください。
 :::
 
-この記事では、TypelevelのライブラリであるFeralを使用してScalaでAWS Lambda関数を作成する方法を紹介します。また、AWS SAMを使って作成した関数のデプロイを行います。
+この記事では、TypelevelのライブラリであるFeralを使用してScala 3でAWS Lambda関数を作成する方法を紹介します。また、AWS SAMを使って作成した関数のデプロイを行います。
 
 本記事では以下の内容についての構築と説明を行います。
 
@@ -360,7 +361,7 @@ Outputs:
     Value: !GetAtt HelloWorldFunctionRole.Arn
 ```
 
-AWS SAMは、`CodeUri`にLambda関数のコードが格納されているディレクトリを指定します。今回はFeralによって生成された`functions/hello-world/target/scala-3.3.3/npm-package/`を指定しています。
+AWS SAMでは、`CodeUri`にLambda関数のコードが格納されているディレクトリを指定します。今回はFeralによって生成された`functions/hello-world/target/scala-3.3.3/npm-package/`を指定しています。
 
 そして、`Handler`にはLambda関数のエントリーポイントを指定します。Feralによって生成されたLambda関数のハンドラーは`index.{オブジェクト名}`となるため、`index.HelloWorld`を指定しています。
 
@@ -433,7 +434,7 @@ REPORT RequestId: bb986cc1-6dee-4cc6-9050-7073d386767d  Init Duration: 0.44 ms  
 sam deploy
 ```
 
-デプロイ準備が完了すると、CloudFormation スタックの変更確認を行い、問題なければスタックの作成/更新を行う。
+デプロイ準備が完了すると、CloudFormation スタックの変更確認を行い、問題なければスタックの作成/更新を行います。
 
 ```shell
 Configuring SAM deploy
