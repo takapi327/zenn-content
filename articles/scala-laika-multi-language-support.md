@@ -9,7 +9,12 @@ published: false
 
 # はじめに
 
-LaikaはScala製のドキュメントツールで、Markdownを使用してドキュメントを記述し、HTMLやPDFなどの形式に変換することができます。Laikaは多言語対応も可能で、この記事ではLaikaを使用して多言語対応したドキュメントを作成する方法について説明します。
+今回は筆者が作成しているOSSプロジェクトのドキュメントをLaikaに書き換えた際に、多言語対応のドキュメントを作成する方法を調査した結果を共有します。
+
+:::message
+今回の方法はLaikaが多言語対応の機能を提供しているわけではなく、Laikaの標準機能を使用して多言語対応のドキュメントを作成しています。
+そのため、今後バージョン更新によって本ブログで紹介している機能は動作しなくなる可能性があることに注意してください。
+:::
 
 ## Laikaとは
 
@@ -351,3 +356,147 @@ $ sbt laikaPreview
 これで言語を切り替えることができました。しかし、現状ではサイドナビゲーションは言語ごとに分かれていないため、次にナビゲーションを言語別に分ける方法について説明します。
 
 ## ナビゲーションを言語別に分ける
+
+Laikaはナビゲーションを自動生成する機能を提供していますが、そのナビゲーションは先ほどの`default.template.html`でカスタマイズすることができます。
+
+ナビゲーションを言語別に分けるためには、言語ごとにナビゲーションを生成する必要があります。Laikaはナビゲーションを生成する際に、`helium.site.mainNavigation`という変数を使用しています。
+
+この`helium.site.mainNavigation`はナビゲーションのエントリーを保持する変数で、この変数を使用してナビゲーションを生成しています。
+
+現在の`src/docs/default.template.html`ではナビゲーション部分は以下のようになっています。
+
+```html
+<nav id="sidebar">
+  ...
+
+  @:navigationTree {
+  entries = ${helium.site.mainNavigation.prependLinks} [
+  { target = "/", excludeRoot = true }
+  ] ${helium.site.mainNavigation.appendLinks}
+  }
+
+</nav>
+```
+
+この`@:navigationTree`はナビゲーションを生成するためのマクロで、`entries`にナビゲーションのエントリーを指定することでナビゲーションを生成しています。
+
+今回は言語用のドキュメントは何らかの方法で言語を選択したら表示されるようにし、サイドナビゲーションは言語に応じて表示されるようにします。
+
+そのため、言語選択前はサイドナビゲーションに言語それぞれのナビゲーションは表示されないようにしたいです。
+
+言語用のメタデータに応じて出しわけを行ってもいいのですが、今回は言語選択前のドキュメントは言語別に用意するものとは別でかつ英語としたいため、言語用のメタデータとは別にルート用のメタデータ (`isRootPath`)を使用することにします。
+
+先ほどの、`default.template.html`を以下のように修正します。
+
+```html
+<nav id="sidebar">
+  ...
+
+  @:if(laika.metadata.isRootPath)
+  @:navigationTree {
+  entries = ${helium.site.mainNavigation.prependLinks} [
+  { target = "/", excludeRoot = true, depth = 1 }
+  ] ${helium.site.mainNavigation.appendLinks}
+  }
+  @:else
+  @:navigationTree {
+  entries = ${helium.site.mainNavigation.prependLinks} [
+  { target = /${laika.metadata.language}/, excludeRoot = true, excludeSections = ${helium.site.mainNavigation.excludeSections}, depth = ${helium.site.mainNavigation.depth} },
+  ] ${helium.site.mainNavigation.appendLinks}
+  }
+  @:@
+</nav>
+```
+
+Laikaはテンプレートファイル内で条件分岐を行うためのマクロを提供しており、`@:if`と`@:else`を使用することで条件分岐を行うことができます。
+
+この機能を利用して、今回は以下のような設定でナビゲーションを生成しています。
+
+- `laika.metadata.isRootPath`が`true`の場合は、ルート用のナビゲーションを生成
+  - ルート用のナビゲーションは深さを1にして、ルート以外のエントリーを表示しないようにしています
+- `laika.metadata.isRootPath`が`false`の場合は、言語用のナビゲーションを生成
+  - 言語用のナビゲーションはLaikaデフォルトのメタデータを使用して深さなどの設定を行っています
+  - `target = /${laika.metadata.language}/`として言語ごとにナビゲーションを生成しています
+
+:::message
+`target = /${laika.metadata.language}/`の部分は、言語ごとに書かれたドキュメントはそれぞれ異なるディレクトリの中に格納されています。Laikaではディレクトリを分割するとそのディレクトリがパスになるため、`en`というディレクトリに格納されたドキュメントは`/en/`というパスになります。
+そのため、`target`を`/${laika.metadata.language}/`として言語ごとにナビゲーションを生成しないとサイドナビゲーションのパスがルート直下のパスになってしまい、正しくナビゲーションが生成されないためメタデータを使用して言語を指定しています。
+:::
+
+テンプレートファイルを修正したら、ルート用のメタデータを`src/docs/index.md`に追加します。
+
+```markdown
+{%
+laika.metadata {
+  language = en
+  isRootPath = true
+}
+%}
+
+# Hello, Laika!
+```
+
+これで、言語選択前のドキュメントは言語別に用意するものとは別で、サイドナビゲーションは言語に応じて表示されるようになりました。
+
+再度、`sbt laikaSite`を実行しプレビューサーバーを起動してみてください。
+
+```shell
+$ sbt laikaSite
+$ sbt laikaPreview
+```
+
+サイドナビゲーションから言語の項目が消えています。
+
+![](/images/scala-laika-multi-language-support/laika-en-html-nav.png)
+
+それぞれの言語のパスにアクセスすると、言語ごとのナビゲーションが表示されていることが確認できるはずです。
+
+**英語**
+
+`http://localhost:4242/en`
+
+![](/images/scala-laika-multi-language-support/laika-en-html-nav-en.png)
+
+**日本語**
+
+`http://localhost:4242/ja`
+
+![](/images/scala-laika-multi-language-support/laika-en-html-nav-ja.png)
+
+このままでは、パスを知っていないと言語を切り替えることができないため、それぞれの言語に対応したリンクを用意する必要があります。
+
+ルート用のドキュメントに以下のようなリンクを追加します。
+
+```markdown
+{%
+laika.metadata {
+  language = en
+  isRootPath = true
+}
+%}
+
+# Hello, Laika!
+
+- [English](en/index.md)
+- [Japanese](ja/index.md)
+```
+
+これで、言語を切り替えるためのリンクが表示されるようになり言語ごとにドキュメントを切り替えることができるようになりました。
+
+![](/images/scala-laika-multi-language-support/laika-en-html-nav-lang.png)
+
+# まとめ
+
+今回の方法だと言語ごとにそれぞれドキュメントを作成し管理する必要がありますが、Laikaの柔軟性を活かして多言語対応のドキュメントを作成することができました。
+
+ただ現状の構成だと、一度言語を選択するとその言語のドキュメントしか表示されないため、それぞれのドキュメントで言語を切り替えるためのリンクを用意する必要があったりと、ユーザビリティの面で改善の余地があると感じました。
+
+Laikaはバージョニングなどの機能を提供しており以下のようにヘッダーでバージョンを切り替えることができるため、テーマなどを自作してみるとよりユーザビリティの高いドキュメントを作成することができるかもしれません。
+
+![](/images/scala-laika-multi-language-support/laika-version.png)
+
+まだまだLaikaの機能は多岐にわたり、今回紹介した機能以外にもさまざまな機能が提供されています。ドキュメントのバージョニングは自身のOSSでも導入してみたい機能の一つであるため、こちらも調査が終わり対応出来次第ブログにて紹介したいと考えています。
+
+PS. LaikaはTypelevelコミュニティのプロジェクトだと説明しましたが、Typelevelには`sbt-nextbeat`というプロジェクトもあり、このプロジェクトはLaikaを使用してドキュメントを生成する機能も提供しています。このプロジェクトを使用するとTypelevel用のテーマやテンプレートを使用することができるため、Typelevelプロジェクトを開発している場合は`sbt-nextbeat`を使用することでより効率的にドキュメントを作成することができるかもしれません。
+
+https://typelevel.org/sbt-typelevel/
