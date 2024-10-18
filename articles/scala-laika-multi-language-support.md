@@ -11,10 +11,16 @@ published: false
 
 今回は筆者が作成しているOSSプロジェクトのドキュメントをLaikaに書き換えた際に、多言語対応のドキュメントを作成する方法を調査した結果を共有します。
 
+多言語対応と記載していますが、`i18n`などを使用して自動的に多言語対応を行うわけではなく、Laikaの標準機能を使用してドキュメントを言語ごとに作成・管理する方法についての説明となりますので、ご了承ください。
+
 :::message
 今回の方法はLaikaが多言語対応の機能を提供しているわけではなく、Laikaの標準機能を使用して多言語対応のドキュメントを作成しています。
 そのため、今後バージョン更新によって本ブログで紹介している機能は動作しなくなる可能性があることに注意してください。
 :::
+
+今回作成した内容は以下リポジトリで公開しています。
+
+https://github.com/takapi327/laika-sandbox
 
 ## Laikaとは
 
@@ -85,7 +91,19 @@ https://blog.3qe.us/entry/2024/02/15/220718
 - Scala: 3.5.1
 - sbt: 1.10.2
 - Laika: 1.2.0
+
+sbtプロジェクトは任意のものを使用・作成してください。
+
+以下のコマンドを使用すると、Scalaのシードプロジェクトを作成できます。
+
+```shell
+$ sbt new scala/scala3.g8
+```
 :::
+
+sbt自体初めての方は以下の記事も参考になるかと思います。
+
+https://blog.3qe.us/entry/2024/04/17/213142
 
 sbtプロジェクトの`project/plugins.sbt`にLaikaのsbtプラグインを追加します。
 
@@ -98,6 +116,33 @@ addSbtPlugin("org.typelevel" % "laika-sbt" % "1.2.0")
 ```scala
 enablePlugins(LaikaPlugin)
 ```
+
+:::message alert
+公式の[ドキュメント](https://typelevel.org/Laika/latest/02-running-laika/01-sbt-plugin.html)ではこの設定で動作すると記載されていますが、実際には以下のエラーが発生しました。
+
+```
+[error] stack trace is suppressed; run last laikaSite for the full output
+[error] (laikaSite) laika.api.errors.InvalidDocuments: One or more invalid documents:
+[error] /index.md
+[error] 
+[error]   [1]: No target for home link found - for options see 'Theme Settings / Top Navigation Bar' in the manual
+[error] 
+[error]   
+[error]   ^
+```
+
+このエラーはLaikaのテーマ設定に関するエラーのようで、どうも以下のようにテーマを指定しナビゲーションバーに表示するホームのリンクを設定する必要があるみたいです。
+
+※ `build.sbt`で`LaikaPlugin`を有効化したプロジェクトに設定
+
+```sbt
+laikaTheme := Helium.defaults.site
+  .topNavigationBar(
+    homeLink = IconLink.internal(Root / "index.md", HeliumIcon.home)
+  )
+  .build
+```
+:::
 
 これでプロジェクトの準備が整いました。
 
