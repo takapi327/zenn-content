@@ -4,7 +4,7 @@ emoji: "♦️"
 type: "tech"
 topics: ["Scala", "Typelevel", "Laika", "ドキュメント"]
 publication_name: nextbeat
-published: false
+published: true
 ---
 
 # はじめに
