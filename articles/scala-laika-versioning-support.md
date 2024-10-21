@@ -142,7 +142,7 @@ laikaTheme := Helium.defaults.site
 
 これでバージョン管理の設定が完了しました。
 
-`laikaTheme`の設定を行った後`sbt laikaSite`を実行し、`sbt liakaPreview`でプレビューを確認してください。
+`laikaTheme`の設定を行った後`sbt laikaSite`を実行し、`sbt laikaPreview`でプレビューを確認してください。
 
 以下のようにナビゲーションバーにバージョンを切り替えるためのセレクトボックスが表示されているかと思います。
 
@@ -205,7 +205,7 @@ val versions = Versions
 
 これで`0.2`のバージョンが追加されました。
 
-先ほどと同様に`sbt laikaSite`を実行し、`sbt liakaPreview`でプレビューを確認してください。
+先ほどと同様に`sbt laikaSite`を実行し、`sbt laikaPreview`でプレビューを確認してください。
 
 ナビゲーションバーに`0.2`のバージョンが追加されていることが確認できるかと思います。
 
@@ -225,9 +225,9 @@ val versions = Versions
 
 `withOlderVersions`メソッドは、引数に`Version`を取り、古いバージョンを追加します。
 
-これで`0.2`のバージョンのドキュメントを作成することができます。
+これで`0.2`のバージョンのドキュメントを作成できます。
 
-`sbt laikaSite`を実行し、`sbt liakaPreview`でプレビューを確認してください。
+`sbt laikaSite`を実行し、`sbt laikaPreview`でプレビューを確認してください。
 
 `0.2`のディレクトリにドキュメントが配置されていることが確認できるかと思います。
 
