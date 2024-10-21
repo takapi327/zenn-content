@@ -21,7 +21,7 @@ https://takapi327.github.io/laika-sandbox/0.1/
 
 ## Laikaとは
 
-Laikaに関しては、以前にも記事を書いていますので詳細はそちらを参照してください。
+Laikaに関しては、以前にも記事を書いていますので詳細はこちらを参照してください。
 
 https://zenn.dev/nextbeat/articles/scala-laika-multi-language-support
 
