@@ -155,11 +155,153 @@ https://www.graalvm.org/
 
 ## プロジェクトの作成
 
-## smithy4sのインストール
+Scala.jsを使用してAWS Lambdaを作成するのですが、ScalaにはFeralというCats Effectを使ってScalaでサーバーレス関数を書き、FaaS(Function as a Service)基盤に適合させる便利なライブラリがあります。
 
-### smithy4sはどのようにAWS クライアントを生成しているのか
+今回はこのFeralを使用してScala.jsでAWS Lambdaを作成します。また、作成したアプリケーションをAWS Lambdaにデプロイするにも設定が必要です。今回はAWS SAMを使用してデプロイします。
+
+FeralとAWS SAMについては以下の記事を参考にしてプロジェクトの作成を行ってください。
+
+https://zenn.dev/nextbeat/articles/scala-feral-lambda-function#feral%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9Flambda%E9%96%A2%E6%95%B0%E3%81%AE%E4%BD%9C%E6%88%90
+
+:::message
+今回は以下環境でプロジェクトを作成しています。
+
+- Scala: 3.5.2
+- sbt: 1.10.4
+- Feral: 0.3.1
+- smithy4s: 0.18.25
+- Node.js: 20.x
+
+sbtプロジェクトは任意のものを使用・作成してください。
+
+以下のコマンドを使用すると、Scalaのシードプロジェクトを作成できます。
+
+```shell
+$ sbt new scala/scala3.g8
+```
+:::
+
+これでプロジェクトの準備ができました。
+
+## smithy4sの設定
+
+プロジェクトの準備ができたら次は、smithy4sの[公式ドキュメント](https://disneystreaming.github.io/smithy4s/docs/overview/quickstart/)を参考にsmithy4sをプロジェクトで使えるように設定を追加します。
+
+sbtプロジェクトの`project/plugins.sbt`にsmithy4sのsbtプラグインを追加します。
+
+```scala
+addSbtPlugin("com.disneystreaming.smithy4s" % "smithy4s-sbt-codegen" % "0.18.25")
+```
+
+次に、プロジェクトの`build.sbt`でプラグインを有効にします。
+
+```scala
+enablePlugins(Smithy4sCodegenPlugin)
+```
+
+これでsmithy4sの設定が完了しました。
+
+次に、smithy4sでAWS SDKを使用するための設定を行います。
+
+smithy4sを使用したAWS SDKの公式ドキュメントは以下を参照してください。
+
+https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws
+
+smithy4sはAWS SDKを生成する際に内部で`http4s`のクライアントを使用しているため、AWS SDKを使用する際には`http4s`を追加する必要があります。
+
+```scala
+libraryDependencies ++= Seq(
+  "com.disneystreaming.smithy4s" %%% "smithy4s-aws-http4s" % smithy4sVersion.value
+)
+```
+
+https://http4s.org/
+
+これでAWS SDKを使用するための設定が完了しました。
+
+ここからは、アプリケーションでどのAWSサービスを使用するかに応じて設定を追加していきます。
+
+例えば、DynamoDBを使用する場合は以下のように設定を追加します。
+
+```scala
+smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
+// OR
+// libraryDependencies ++= Seq(
+//   "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "2023.09.22" % Smithy4s
+// )
+```
+
+上記設定は全然違うように見えますが、実際はどちらも同じことをしているため好きな方を選んでも問題ありません。
+
+::::details 詳細な説明
+
+`smithy4sAwsSpecs`はロードするAWSモジュールのリストを保持しています。
+
+smithy4sはプラグイン内部でロードするAWSモジュールのリストに基づいて、AWS SDKを生成します。
+:::message
+モジュールのリストはいくつかあって、`smithy4sAwsSpecs`はそのうちの1つです。
+:::
+
+`libraryDependencies`に`% Smithy4s`を追加しているものは、プラグイン内部でこのキーが付与されているものをコンパイル時にフィルタリングしてモジュールのリストに追加しています。
+
+一方で、`AWS.dynamodb`は直接モジュールのリストに追加しています。
+
+この`AWS`オブジェクトはsmithy4sのcodegenパッケージ内で自動的に生成されたものであり、実態は以下のようになっています。
+
+```scala
+object AwsSpecs {
+  val org = "com.disneystreaming.smithy"
+  val knownVersion = "2023.09.22"
+  ...
+  val dynamodb = "aws-dynamodb-spec"
+}
+```
+
+:::message
+AWSオブジェクトはAwsSpecsのエイリアスです。
+プラグインの設定を簡潔にするために、`autoImport`を使用してAWSオブジェクトを定義しています。
+```scala
+object autoImport {
+  val AWS = smithy4s.codegen.AwsSpecs
+}
+```
+
+また、`AwsSpecs`は自動生成されたものであるためsmithy4sのGithubを確認しても見つけることはできません。実装内容を知りたい場合は、smithy4s.codegenプロジェクトの`target`配下に生成されたソースコードを確認する必要があります。
+:::
+
+そして、プラグイン内部で以下のように`libraryDependencies`に追加していたものと同じ形式でモジュールのリストに追加しています。
+
+```scala
+smithy4sAwsSpecsVersion := smithy4s.codegen.AwsSpecs.knownVersion,
+Compile / smithy4sAwsSpecDependencies := {
+  val version = (smithy4sAwsSpecsVersion).value
+  (smithy4sAwsSpecs).value.map { case artifactName =>
+    smithy4s.codegen.AwsSpecs.org % artifactName % version
+    // "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "2023.09.22" こうなっているということ
+  }
+}
+```
+
+このように、`smithy4sAwsSpecs`に直接モジュールを追加する場合も、`libraryDependencies`に追加する場合も最終的にはsmithy4sがコード生成するために使用する配列の中に同じ形式で追加されるため、どちらを使用しても問題ないということです。
+::::
+
+smithy4sで使用できるAWSサービスの一覧は以下を参照してください。
+
+https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws#service-summary
+
+:::message
+[公式](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws#what-is-missing-)にも記載されていますが、smithy4sでAWS SDKを使用する際は以下に注意してください。
+
+- ストリーミング操作（S3のputObject、getObject、KinesisのsubscribeToShardなど）は現在サポートされていない
+- サービス固有のカスタマイズは現在サポートされていない
+- AWS S3にデータを入出力するためにsmithy4sを使用すべきではない
+
+S3をなぜ使用してはいけないのについて筆者は詳しくないため、もしわかる方がいれば教えていただけると幸いです。
+:::
 
 ## AWS クライアントの生成
+
+### smithy4sはどのようにAWS クライアントを生成しているのか
 
 ## クライアントの使用
 
