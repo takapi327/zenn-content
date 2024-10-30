@@ -211,11 +211,15 @@ smithy4sはAWS SDKを生成する際に内部で`http4s`のクライアントを
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.disneystreaming.smithy4s" %%% "smithy4s-aws-http4s" % smithy4sVersion.value
+  "com.disneystreaming.smithy4s" %%% "smithy4s-aws-http4s" % smithy4sVersion.value,
+  "org.http4s" %%% "http4s-ember-client" % "0.23.29"
 )
 ```
 
-https://http4s.org/
+:::message
+`smithy4s-aws-http4s`は`http4s`のクライアントを使用してAWS SDK用のクライアントを生成するためのライブラリです。
+`http4s-ember-client`は[http4s](https://http4s.org/)のクライアントライブラリです。
+:::
 
 これでAWS SDKを使用するための設定が完了しました。
 
@@ -300,6 +304,73 @@ S3をなぜ使用してはいけないのについて筆者は詳しくないた
 :::
 
 ## AWS クライアントの生成
+
+smithy4sの設定が完了したら、AWS クライアントを生成します。今回はDynamoDBを使用してレコードの作成と取得を行うサンプルを作成します。
+
+まずは、DynamoDBのAWS SDKを生成できるように以下設定を追加します。
+
+```scala
+smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
+```
+
+追加したら、以下のコマンドを実行してAWS SDKを生成します。
+
+```shell
+$ sbt compile
+```
+
+コンパイルを実行すると以下ディレクトリにAWS SDKが生成されます。
+
+```
+target/scala-x.x.x/src_managed/main/smithy4s/com.amazonaws.dynamodb
+```
+
+生成されたパッケージを使用することで、DynamoDBにアクセスすることができます。
+
+```scala
+import com.amazonaws.dynamodb.*
+```
+
+smithy4sでAWS SDKを使用する際は、以下のようにAWS クライアントを生成する必要があります。
+
+`AwsEnvironment`はリージョンや、認証情報を保持するためのクラスです。
+
+`AwsClient`は引数で受け取ったサービスに対して操作を行うクラスを生成します。
+
+```scala 3
+for
+  httpClient <- EmberClientBuilder.default[IO].build
+  awsEnv <- AwsEnvironment.default(httpClient, AwsRegion.AP_NORTHEAST_1)
+  dynamodb <- AwsClient(DynamoDB.service, awsEnv)
+yield dynamodb
+```
+
+これらは`cats.effect`の`Resource`を使用しているため、リソースの解放を自動的に行うことができます。
+
+今回は`Feral`を使用しているため、以下のように`IOLambda.Simple`を継承してLambda関数を作成し、初期化処理でDynamoDBのクライアントを生成します。
+
+```scala 3
+import cats.effect.*
+import fs2.io.compression.*
+import feral.lambda.*
+import org.http4s.ember.client.EmberClientBuilder
+import smithy4s.aws.*
+import com.amazonaws.dynamodb.*
+
+object Handler extends IOLambda.Simple[Unit, Unit]:
+
+  override type Init = DynamoDB[IO]
+
+  override def init: Resource[IO, Init] =
+    for
+      httpClient <- EmberClientBuilder.default[IO].build
+      awsEnv <- AwsEnvironment.default(httpClient, AwsRegion.AP_NORTHEAST_1)
+      dynamodb <- AwsClient(DynamoDB.service, awsEnv)
+    yield dynamodb
+
+  override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Unit]] =
+    ??? // DynamoDBのレコードを作成する処理を記述
+```
 
 ### smithy4sはどのようにAWS クライアントを生成しているのか
 
