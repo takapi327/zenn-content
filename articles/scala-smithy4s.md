@@ -376,6 +376,41 @@ object Handler extends IOLambda.Simple[Unit, Unit]:
 
 ## クライアントの使用
 
+AWS クライアントを生成したら、DynamoDBにレコードを作成する処理を記述します。
+
+```scala 3
+override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Unit]] =
+  init.putItem(
+    TableName("test"),
+    Map(
+      AttributeName("id") -> AttributeValue.n(NumberAttributeValue("1")),
+      AttributeName("name") -> AttributeValue.s(StringAttributeValue("Alice"))
+    )
+  ).as(None)
+```
+
+上記のコードは、`test`テーブルに`id`と`name`のレコードを作成する処理です。
+
+このように、AWS クライアントを使用することで、DynamoDBに対して操作を行うことができます。
+
 ## LocalStackでのテスト
+
+AWS クライアントを使用する際には、実際のAWSアカウントを使用することもできますが、テスト時にはLocalStackを使用することをおすすめします。
+
+LocalStackは、AWSのローカルエミュレータで、AWSの主要なサービスをローカルで実行することができます。
+
+https://www.localstack.cloud/
+
+LocalStackはDockerコンテナが提供されているため、Dockerを使用して構築しておきましょう。
+
+::::details LocalStackの構築
+
+::::
+
+LocalStackを使用することで、実際のAWSアカウントを使用せずに、ローカルでAWSサービスをテストすることができます。
+
+smithy4sはLocalStackをサポートしているため、LocalStackを使用してAWS クライアントをテストすることができます。
+
+https://disneystreaming.github.io/smithy4s/docs/protocols/aws/localstack
 
 # まとめ
