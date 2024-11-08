@@ -462,6 +462,10 @@ smithy4sはLocalStackをサポートしているため、LocalStackを使用し�
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/localstack
 
+Smithy4sで構築したAWSクライアントをローカル環境に適用するには、リクエストをLocalstackのホストとポートにリダイレクトするミドルウェア`(Client[F] => Client[F]関数)`を作成する必要があります。
+
+ミドルウェアの例は以下となります。
+
 ```scala 3
 object LocalstackProxy:
   def apply[F[_]: Async: Compression](client: Client[F]): Client[F] = Client { req =>
@@ -485,7 +489,7 @@ object LocalstackProxy:
 
 :::message alert
 
-一点注意が必要な点があります。現在 (2024年11月時点)では特定のサービスを使用する際にリクエストヘッダーから`X-Amz-Target`を削除しないと正常に動作しない場合があります。
+一点注意が必要な点があります。現時点(2024年11月時点)では特定のサービスを使用する際にリクエストヘッダーから`X-Amz-Target`を削除しないと正常に動作しない場合があります。
 
 筆者が遭遇したのは、SQSを使用する際に`X-Amz-Target`を削除しないとレスポンス型をXML形式で期待しているのにJSONで帰ってきてしまいパースを行うことができずエラーになるというものでした。
 
@@ -509,6 +513,51 @@ val request =
 client.run(request)
 ```
 :::
+
+次にこのミドルウェアを使用したAWS クライアントを生成します。
+
+`AwsEnvironment`では、LocalStackで使用するクレデンシャル情報を設定します。
+
+そして受け取る`Client[F]`に対してLocalStackのホストとポートにリダイレクトするミドルウェアを適用することで、LocalStackでAWS クライアントを使用することができます。
+
+```scala 3
+import cats.syntax.all.*
+import cats.effect.*
+import fs2.compression.Compression
+import org.http4s.client.Client
+import smithy4s.*
+import smithy4s.aws.*
+
+object LocalstackClient:
+
+  private def env[F[_]: Async: Compression](
+    client: Client[F],
+    region: AwsRegion
+  ): AwsEnvironment[F] =
+    AwsEnvironment.make[F](
+      client,
+      Async[F].pure(region),
+      Async[F].pure(AwsCredentials.Default("dummy", "dummy", None)),
+      Async[F].realTime.map(_.toSeconds).map(Timestamp(_, 0))
+    )
+
+  def apply[F[_]: Async: Compression, Alg[_[_, _, _, _, _]]](
+    client:  Client[F],
+    region:  AwsRegion,
+    service: Service[Alg]
+  ): Resource[F, service.Impl[F]] =
+    AwsClient(service, env[F](LocalstackProxy[F](client), region))
+```
+
+公式のサンプルコードでは特定のサービス専用にクライアントを作成していましたが、今回は汎用的なクライアントを作成するために`smithy4s`の`Service`を型パラメーター(`Alg`)を指定して受け取るようにしました。
+
+これで使用したいサービスに対してクライアントを生成できます。
+
+```scala 3
+val sqsClient = LocalstackClient(httpClient, AwsRegion.AP_NORTHEAST_1, SQS.service)
+```
+
+これで`smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
 
 ### DynamoDBのリソースを作成
 
