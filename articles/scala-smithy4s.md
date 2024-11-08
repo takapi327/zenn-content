@@ -405,6 +405,54 @@ LocalStackはDockerコンテナが提供されているため、Dockerを使用�
 
 ::::details LocalStackの構築
 
+```yaml
+services:
+  localstack:
+    container_name: localstack
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    image: localstack/localstack:latest
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    configs:
+      - source: aws_profile
+        target: /root/.aws
+    environment:
+      - DEFAULT_REGION=ap-northeast-1
+      - DEBUG=${DEBUG:-0}
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR:-docker}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+configs:
+  aws_profile:
+    file: ./localstack/profile
+```
+
+```shell
+mkdir localstack/profile
+```
+
+```shell
+touch localstack/profile/config
+```
+
+```text
+[profile localstack]
+region = ap-northeast-1
+output = json
+```
+
+```shell
+touch localstack/profile/credentials
+```
+
+```text
+[localstack]
+aws_access_key_id = dummy
+aws_secret_access_key = dummy
+```
 ::::
 
 LocalStackを使用することで、実際のAWSアカウントを使用せずに、ローカルでAWSサービスをテストすることができます。
@@ -412,5 +460,7 @@ LocalStackを使用することで、実際のAWSアカウントを使用せず�
 smithy4sはLocalStackをサポートしているため、LocalStackを使用してAWS クライアントをテストすることができます。
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/localstack
+
+### DynamoDBのリソースを作成
 
 # まとめ
