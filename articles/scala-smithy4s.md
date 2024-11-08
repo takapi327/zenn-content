@@ -553,12 +553,20 @@ object LocalstackClient:
 
 これで使用したいサービスに対してクライアントを生成できます。
 
+先ほど作成した`DynamoDB`用のクライアントを作成した`LocalstackClient`を使用したコードに書き換えておきましょう。
+
 ```scala 3
-val sqsClient = LocalstackClient(httpClient, AwsRegion.AP_NORTHEAST_1, SQS.service)
+  override def init: Resource[IO, Init] =
+    for
+      httpClient <- EmberClientBuilder.default[IO].build
+      dynamodb <- LocalstackClient(httpClient, AwsRegion.AP_NORTHEAST_1, DynamoDB.service)
+    yield dynamodb
 ```
 
 これで`smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
 
 ### DynamoDBのリソースを作成
+
+次に、`LocalStack`上に`DynamoDB`のリソースを作成します。
 
 # まとめ
