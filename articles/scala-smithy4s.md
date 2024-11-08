@@ -431,6 +431,7 @@ configs:
 ```
 
 ```shell
+mkdir localstack
 mkdir localstack/profile
 ```
 
@@ -460,6 +461,54 @@ LocalStackを使用することで、実際のAWSアカウントを使用せず�
 smithy4sはLocalStackをサポートしているため、LocalStackを使用してAWS クライアントをテストすることができます。
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/localstack
+
+```scala 3
+object LocalstackProxy:
+  def apply[F[_]: Async: Compression](client: Client[F]): Client[F] = Client { req =>
+    val request = req
+      .withUri(
+        req.uri.copy(
+          scheme = Some(Uri.Scheme.http),
+          authority = req.uri.authority.map(
+            _.copy(
+              host = Uri.RegName("localstack"),
+              port = Some(4566)
+            )
+          )
+        )
+      )
+      .putHeaders(Header.Raw(ci"host", "localstack"))
+
+    client.run(request)
+  }
+```
+
+:::message alert
+
+一点注意が必要な点があります。現在 (2024年11月時点)では特定のサービスを使用する際にリクエストヘッダーから`X-Amz-Target`を削除しないと正常に動作しない場合があります。
+
+筆者が遭遇したのは、SQSを使用する際に`X-Amz-Target`を削除しないとレスポンス型をXML形式で期待しているのにJSONで帰ってきてしまいパースを行うことができずエラーになるというものでした。
+
+この情報がSmithy4s公式のDiscord上でしか見つけられなかったため、もし同じような問題に遭遇した場合は以下のようにリクエストヘッダーから`X-Amz-Target`を削除してリクエストを送信してみてください。
+
+他のサービスではこのヘッダー情報を削除すると逆にエラーになる場合もあるため、対象のサービスに絞って対応するのが良いかと思います。
+
+```scala 3
+val isSQS = req.headers.headers
+  .find(_.name == ci"X-Amz-Target")
+  .exists(_.value.contains("AmazonSQS"))
+
+val base = req
+  .withUri(...)
+  ...
+
+val request =
+  if isSQS then base.removeHeader(ci"X-Amz-Target")
+  else base
+  
+client.run(request)
+```
+:::
 
 ### DynamoDBのリソースを作成
 
