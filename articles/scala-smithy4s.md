@@ -569,4 +569,29 @@ object LocalstackClient:
 
 次に、`LocalStack`上に`DynamoDB`のリソースを作成します。
 
+AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以下のように`Type`を`AWS::Serverless::SimpleTable`に設定して`TableName`を指定することで作成することができます。
+
+```yaml
+  Smithy4sSandboxTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: Smithy4sSandboxTable
+```
+
+作成するDynamoDBにはLambda関数からアクセスするため、作成したDynamoDBのテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
+
+```yaml
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/hello-world/target/scala-3.3.3/npm-package/
+      Handler: index.Handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref Smithy4sSandboxTable
+```
+
 # まとめ
