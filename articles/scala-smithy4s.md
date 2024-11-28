@@ -51,7 +51,7 @@ smithy4sには以下のような特徴があります
 2. 簡単な統合
 3. 開発効率の向上
 
-また、smithy4sはScala.js, Scala Native, Scala JVMのマルチプラットフォームをサポートしています。
+また、smithy4sはScala.js, Scala Native, JVMのマルチプラットフォームをサポートしています。
 
 現在Smithy4sは以下の用途に使用できます。
 
