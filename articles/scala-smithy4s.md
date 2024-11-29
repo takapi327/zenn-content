@@ -63,6 +63,10 @@ smithy4sには以下のような特徴があります
 
 # Scala.jsでAWS クライアントを使う
 
+:::message
+少し長くなるので使い方だけ知りたいよ〜って方は「プロジェクトの作成 」まで読み飛ばしてください。
+:::
+
 まず、なぜScala.jsでAWS クライアントを使うのか？という疑問があるかもしれません。実際、AWSに対しての処理はScalaであればJava用のSDKが提供されているため、こちらを使用するのが一般的です。
 
 しかし、昨今のScalaはJVMだけでなく、Scala.jsやScala Nativeといったプラットフォームをサポートしており、これらのプラットフォームではJava用のAWS SDKを利用することができません。そのため、Scala.jsやScala NativeでAWSを利用するためには、別の方法を考える必要があります。
@@ -372,8 +376,6 @@ object Handler extends IOLambda.Simple[Unit, Unit]:
     ??? // DynamoDBのレコードを作成する処理を記述
 ```
 
-### smithy4sはどのようにAWS クライアントを生成しているのか
-
 ## クライアントの使用
 
 AWS クライアントを生成したら、DynamoDBにレコードを作成する処理を記述します。
@@ -381,7 +383,7 @@ AWS クライアントを生成したら、DynamoDBにレコードを作成す�
 ```scala 3
 override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Unit]] =
   init.putItem(
-    TableName("test"),
+    TableName("Smithy4sSandboxTable"),
     Map(
       AttributeName("id") -> AttributeValue.n(NumberAttributeValue("1")),
       AttributeName("name") -> AttributeValue.s(StringAttributeValue("Alice"))
@@ -569,7 +571,7 @@ object LocalstackClient:
 
 次に、`LocalStack`上に`DynamoDB`のリソースを作成します。
 
-AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以下のように`Type`を`AWS::Serverless::SimpleTable`に設定して`TableName`を指定することで作成することができます。
+AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以下のように`Type`を`AWS::Serverless::SimpleTable`に設定して`TableName`を指定することで作成できます。
 
 ```yaml
   Smithy4sSandboxTable:
@@ -577,6 +579,60 @@ AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以
     Properties:
       TableName: Smithy4sSandboxTable
 ```
+
+`DynamoDB`はこの設定だけで`LocalStack`上にリソースを作成できます。
+
+AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、｀samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
+
+`aws-sam-cli-local`を使用するためにはPythonの環境が必要なので用意しておきましょう。
+
+::::details Pythonの環境構築
+
+```shell
+$ pipenv sync
+$ pyenv install 3.9.16
+$ pyenv local 3.9.16
+$ pyenv rehash
+
+$ pip install pipenv
+$ pipenv --python 3.9.16
+```
+
+```shell
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+```
+
+::::
+
+```shell
+$ pipenv install aws-sam-cli-local
+```
+
+```shell
+# samlocalコマンドを利用するので、pipenvのshellに入る
+$ pipenv shell
+
+# localstackにデプロイ
+$ samlocal deploy
+```
+
+`LocalStack`上に`DynamoDB`のリソースが作成されたら、`LocalStack`のホストとポートにリダイレクトするミドルウェアを適用したAWS クライアントを使用して、`DynamoDB`にレコードを作成する処理を実行してみましょう。
+
+```shell
+$ sbt insertDynamoDB/run
+```
+
+::::details sbt projectの詳細
+
+```sbt
+
+```
+::::
+
 
 作成するDynamoDBにはLambda関数からアクセスするため、作成したDynamoDBのテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
 
