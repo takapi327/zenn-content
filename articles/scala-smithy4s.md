@@ -399,6 +399,103 @@ override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Str
 
 このように、AWS クライアントを使用することで、DynamoDBに対して操作を行うことができます。
 
+上記の設定を追加したら、以下のコマンドを実行してScalaで作成したLambda関数をjsファイルとしてビルドします。
+
+```shell
+$ sbt npmPackage
+```
+
+すると`target/scala-(Scalaバージョン)/npm-package`にファイルが生成されます。
+
+```
+.
+├── functions
+│   └── insert-dynamodb
+│       ├── target
+│       │   └── scala-3.5.2
+│       │       ├── npm-package
+│       │       │   ├── index.js
+│       │       │   └── package.json
+```
+
+このファイルをAWS SAMを使ってデプロイします。
+
+## AWSへのデプロイ
+
+AWS Lambdaにデプロイするためには、AWS SAMを使用します。
+
+AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以下のように`Type`を`AWS::Serverless::SimpleTable`に設定して`TableName`を指定することで作成できます。
+
+```yaml
+  Smithy4sSandboxTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: Smithy4sSandboxTable
+```
+
+`DynamoDB`はこの設定だけでリソースを作成できます。
+
+次は上記`DynamoDB`にレコードを挿入するLambda関数を作成します。
+作成する`DynamoDB`にはLambda関数からアクセスするため、作成した`DynamoDB`のテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
+
+```yaml
+  InsertDynamoDB:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
+      Handler: index.Handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref Smithy4sSandboxTable
+```
+
+::::details template.yamlの全体
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  smithy4s-sandbox
+
+  Sample SAM Template for smithy4s-sandbox
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  InsertDynamoDB:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
+      Handler: index.Handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref Smithy4sSandboxTable
+  Smithy4sSandboxTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: Smithy4sSandboxTable
+```
+::::
+
+今回はCodeUriにLambda関数のコードが格納されているディレクトリを指定してデプロイを行います。Feralによって生成された`functions/insert-dynamodb/target/scala-3.5.2/npm-package/`を指定しています。ここは各自のプロジェクトに合わせて変更してください。
+
+設定が完了したら、以下のコマンドを実行してデプロイします。
+
+AWSへデプロイする際には認証情報が必要です。認証情報の設定は各自の好きな方法で設定してください。
+
+```shell
+$ sam deploy
+```
+
 ## LocalStackでのテスト
 
 AWS クライアントを使用する際には、実際のAWSアカウントを使用することもできますが、テスト時にはLocalStackを使用することをおすすめします。
@@ -555,72 +652,6 @@ object LocalstackClient:
 ```
 
 これで`smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
-
-### DynamoDBのリソースを作成
-
-次に、`LocalStack`上に`DynamoDB`のリソースを作成します。
-
-AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以下のように`Type`を`AWS::Serverless::SimpleTable`に設定して`TableName`を指定することで作成できます。
-
-```yaml
-  Smithy4sSandboxTable:
-    Type: AWS::Serverless::SimpleTable
-    Properties:
-      TableName: Smithy4sSandboxTable
-```
-
-`DynamoDB`はこの設定だけで`LocalStack`上にリソースを作成できます。
-
-次は上記`DynamoDB`にレコードを挿入するLambda関数を作成します。
-作成する`DynamoDB`にはLambda関数からアクセスするため、作成した`DynamoDB`のテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
-
-```yaml
-  InsertDynamoDB:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
-      Handler: index.Handler
-      Runtime: nodejs20.x
-      Architectures:
-        - x86_64
-      Policies:
-        DynamoDBCrudPolicy:
-          TableName: !Ref Smithy4sSandboxTable
-```
-
-::::details template.yamlの全体
-
-```yaml
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: >
-  smithy4s-sandbox
-
-  Sample SAM Template for smithy4s-sandbox
-  
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 3
-
-Resources:
-  InsertDynamoDB:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
-      Handler: index.Handler
-      Runtime: nodejs20.x
-      Architectures:
-        - x86_64
-      Policies:
-        DynamoDBCrudPolicy:
-          TableName: !Ref Smithy4sSandboxTable
-  Smithy4sSandboxTable:
-    Type: AWS::Serverless::SimpleTable
-    Properties:
-      TableName: Smithy4sSandboxTable
-```
-::::
 
 AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、`samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
 
