@@ -187,6 +187,10 @@ $ sbt new scala/scala3.g8
 
 これでプロジェクトの準備ができました。
 
+今回作成したプロジェクトは以下で公開しておりますので参考にしてください。
+
+https://github.com/takapi327/smithy4s-sandbox
+
 ## smithy4sの設定
 
 プロジェクトの準備ができたら次は、smithy4sの[公式ドキュメント](https://disneystreaming.github.io/smithy4s/docs/overview/quickstart/)を参考にsmithy4sをプロジェクトで使えるように設定を追加します。
@@ -361,7 +365,7 @@ import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws.*
 import com.amazonaws.dynamodb.*
 
-object Handler extends IOLambda.Simple[Unit, Unit]:
+object Handler extends IOLambda.Simple[Unit, String]:
 
   override type Init = DynamoDB[IO]
 
@@ -372,7 +376,7 @@ object Handler extends IOLambda.Simple[Unit, Unit]:
       dynamodb <- AwsClient(DynamoDB.service, awsEnv)
     yield dynamodb
 
-  override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Unit]] =
+  override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[String]] =
     ??? // DynamoDBのレコードを作成する処理を記述
 ```
 
@@ -381,14 +385,14 @@ object Handler extends IOLambda.Simple[Unit, Unit]:
 AWS クライアントを生成したら、DynamoDBにレコードを作成する処理を記述します。
 
 ```scala 3
-override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Unit]] =
+override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[String]] =
   init.putItem(
     TableName("Smithy4sSandboxTable"),
     Map(
-      AttributeName("id") -> AttributeValue.n(NumberAttributeValue("1")),
+      AttributeName("id") -> AttributeValue.s(StringAttributeValue("1")),
       AttributeName("name") -> AttributeValue.s(StringAttributeValue("Alice"))
     )
-  ).as(None)
+  ).as(Some("Success"))
 ```
 
 上記のコードは、`test`テーブルに`id`と`name`のレコードを作成する処理です。
@@ -416,9 +420,6 @@ services:
     ports:
       - "127.0.0.1:4566:4566"
       - "127.0.0.1:4510-4559:4510-4559"
-    configs:
-      - source: aws_profile
-        target: /root/.aws
     environment:
       - DEFAULT_REGION=ap-northeast-1
       - DEBUG=${DEBUG:-0}
@@ -426,35 +427,8 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-
-configs:
-  aws_profile:
-    file: ./localstack/profile
-```
-
-```shell
-mkdir localstack
-mkdir localstack/profile
-```
-
-```shell
-touch localstack/profile/config
-```
-
-```text
-[profile localstack]
-region = ap-northeast-1
-output = json
-```
-
-```shell
-touch localstack/profile/credentials
-```
-
-```text
-[localstack]
-aws_access_key_id = dummy
-aws_secret_access_key = dummy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 ```
 ::::
 
@@ -468,7 +442,22 @@ Smithy4sで構築したAWSクライアントをローカル環境に適用する
 
 ミドルウェアの例は以下となります。
 
+:::message
+ホストはLambdaをどこで実行するかによって変わります。以下参考にしていただければと思います。
+
+| 実行場所             | ホスト                  | 備考                                   |
+|------------------|----------------------|--------------------------------------|
+| ローカル             | host.docker.internal | `samlocal local invoke`コマンドなどを使用する場合 |
+| docker container | localstack           | `SQS`や`SNS`などを経由して実行する場合             |
+:::
+
 ```scala 3
+import org.typelevel.ci.*
+import fs2.compression.Compression
+import cats.effect.*
+import org.http4s.*
+import org.http4s.client.Client
+
 object LocalstackProxy:
   def apply[F[_]: Async: Compression](client: Client[F]): Client[F] = Client { req =>
     val request = req
@@ -477,13 +466,13 @@ object LocalstackProxy:
           scheme = Some(Uri.Scheme.http),
           authority = req.uri.authority.map(
             _.copy(
-              host = Uri.RegName("localstack"),
+              host = Uri.RegName("host.docker.internal"),
               port = Some(4566)
             )
           )
         )
       )
-      .putHeaders(Header.Raw(ci"host", "localstack"))
+      .putHeaders(Header.Raw(ci"host", "host.docker.internal"))
 
     client.run(request)
   }
@@ -582,34 +571,68 @@ AWS SAMを使用して`DynamoDB`のリソースを作成するためには、以
 
 `DynamoDB`はこの設定だけで`LocalStack`上にリソースを作成できます。
 
-AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、｀samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
+次は上記`DynamoDB`にレコードを挿入するLambda関数を作成します。
+作成する`DynamoDB`にはLambda関数からアクセスするため、作成した`DynamoDB`のテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
 
-`aws-sam-cli-local`を使用するためにはPythonの環境が必要なので用意しておきましょう。
-
-::::details Pythonの環境構築
-
-```shell
-$ pipenv sync
-$ pyenv install 3.9.16
-$ pyenv local 3.9.16
-$ pyenv rehash
-
-$ pip install pipenv
-$ pipenv --python 3.9.16
+```yaml
+  InsertDynamoDB:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
+      Handler: index.Handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref Smithy4sSandboxTable
 ```
 
-```shell
-# pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-```
+::::details template.yamlの全体
 
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  smithy4s-sandbox
+
+  Sample SAM Template for smithy4s-sandbox
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  InsertDynamoDB:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/insert-dynamodb/target/scala-3.5.2/npm-package/
+      Handler: index.Handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Policies:
+        DynamoDBCrudPolicy:
+          TableName: !Ref Smithy4sSandboxTable
+  Smithy4sSandboxTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: Smithy4sSandboxTable
+```
 ::::
+
+AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、`samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
+
+`aws-sam-cli-local`を使用するためにはPythonの環境が必要なので以下記事などを参考に用意しておきましょう。
+
+https://qiita.com/y-tsutsu/items/54c10e0b2c6b565c887a
+
+Localstack上のリソース確認などは`awscli-local`を使用するので合わせてインストールをしておきます。
 
 ```shell
 $ pipenv install aws-sam-cli-local
+$ pipenv install awscli-local
 ```
 
 ```shell
@@ -622,16 +645,19 @@ $ samlocal deploy
 
 ::::details samlocal deployの詳細
 
+作成および更新するリソースの内容を確認し、問題なければ「y」を入力してデプロイを実行します。
 ```shell
 CloudFormation stack changeset
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Operation                                                                                LogicalResourceId                                                                        ResourceType                                                                             Replacement                                                                            
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
++ Add                                                                                    InsertDynamoDB                                                                           AWS::Lambda::Function                                                                    N/A                                                                                    
++ Add                                                                                    InsertDynamoDBRole                                                                       AWS::IAM::Role                                                                           N/A                                                                                    
 + Add                                                                                    Smithy4sSandboxTable                                                                     AWS::DynamoDB::Table                                                                     N/A                                                                                    
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-Changeset created successfully. arn:aws:cloudformation:ap-northeast-1:000000000000:changeSet/samcli-deploy1732847523/e142e745
+Changeset created successfully. arn:aws:cloudformation:ap-northeast-1:000000000000:changeSet/samcli-deploy1732859682/38652d23
 
 
 Previewing CloudFormation changeset before deployment
@@ -639,13 +665,9 @@ Previewing CloudFormation changeset before deployment
 Deploy this changeset? [y/N]: 
 ```
 
+作成および更新されたリソースの一覧が表示されます。
+
 ```shell
-Previewing CloudFormation changeset before deployment
-======================================================
-Deploy this changeset? [y/N]: y
-
-2024-11-29 11:33:56 - Waiting for stack create/update to complete
-
 CloudFormation events from stack operations (refresh every 5.0 seconds)
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ResourceStatus                                                                           ResourceType                                                                             LogicalResourceId                                                                        ResourceStatusReason                                                                   
@@ -653,6 +675,10 @@ ResourceStatus                                                                  
 CREATE_IN_PROGRESS                                                                       AWS::CloudFormation::Stack                                                               smithy4s-sandbox                                                                         -                                                                                      
 CREATE_IN_PROGRESS                                                                       AWS::DynamoDB::Table                                                                     Smithy4sSandboxTable                                                                     -                                                                                      
 CREATE_COMPLETE                                                                          AWS::DynamoDB::Table                                                                     Smithy4sSandboxTable                                                                     -                                                                                      
+CREATE_IN_PROGRESS                                                                       AWS::IAM::Role                                                                           InsertDynamoDBRole                                                                       -                                                                                      
+CREATE_COMPLETE                                                                          AWS::IAM::Role                                                                           InsertDynamoDBRole                                                                       -                                                                                      
+CREATE_IN_PROGRESS                                                                       AWS::Lambda::Function                                                                    InsertDynamoDB                                                                           -                                                                                      
+CREATE_COMPLETE                                                                          AWS::Lambda::Function                                                                    InsertDynamoDB                                                                           -                                                                                      
 CREATE_COMPLETE                                                                          AWS::CloudFormation::Stack                                                               smithy4s-sandbox                                                                         -                                                                                      
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -661,46 +687,54 @@ Successfully created/updated stack - smithy4s-sandbox in ap-northeast-1
 ```
 ::::
 
-
-`LocalStack`上に`DynamoDB`のリソースが作成されたら、`LocalStack`のホストとポートにリダイレクトするミドルウェアを適用したAWS クライアントを使用して、`DynamoDB`にレコードを作成する処理を実行してみましょう。
+`LocalStack`上に`DynamoDB`のリソースが作成されたら、 まずは以下コマンドを実行して`DynamoDB`のテーブルにレコードが存在していないことを確認しておきます。
 
 ```shell
-$ sbt insertDynamoDB/run
+$ awslocal dynamodb scan --table-name Smithy4sSandboxTable
+{
+    "Items": [],
+    "Count": 0,
+    "ScannedCount": 0,
+    "ConsumedCapacity": null
+}
 ```
 
-::::details sbt projectの詳細
+次に`LocalStack`のホストとポートにリダイレクトするミドルウェアを適用したAWS クライアントを使用して、`DynamoDB`にレコードを作成する処理を実行してみましょう。
 
-```sbt
-lazy val insertDynamoDB = (project in file("functions/insert-dynamodb"))
-  .settings(name := "insert-dynamodb")
-  .settings(libraryDependencies ++= Seq(
-    "com.disneystreaming.smithy4s" %%% "smithy4s-aws-http4s" % smithy4sVersion.value,
-    "org.http4s" %%% "http4s-ember-client" % "0.23.29"
-  ))
-  .settings(smithy4sAwsSpecs ++= Seq(AWS.dynamodb))
-  .enablePlugins(LambdaJSPlugin, Smithy4sCodegenPlugin)
-
-lazy val root = (project in file("."))
-  .settings(name := "smithy4s-sandbox")
-  .aggregate(insertDynamoDB)
+```shell
+$ samlocal local invoke InsertDynamoDB
 ```
-::::
 
+コマンドを実行すると以下のようにLambdaの処理で返却していた`Success`が表示されるためレコードが作成されたことが確認できます。
 
-作成するDynamoDBにはLambda関数からアクセスするため、作成したDynamoDBのテーブルにアクセスできるようにLambda関数にポリシーを設定する必要があります。
+```shell
+START RequestId: 87926c3f-b3be-426b-a4b8-61eb99ad7ecf Version: $LATEST
+END RequestId: d0573e25-cdfa-4f53-94df-2c2c507e515b
+REPORT RequestId: d0573e25-cdfa-4f53-94df-2c2c507e515b  Init Duration: 0.28 ms  Duration: 2327.89 ms    Billed Duration: 2328 ms        Memory Size: 128 MB     Max Memory Used: 128 MB 
+"Success"
+```
 
-```yaml
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/hello-world/target/scala-3.3.3/npm-package/
-      Handler: index.Handler
-      Runtime: nodejs20.x
-      Architectures:
-        - x86_64
-      Policies:
-        DynamoDBCrudPolicy:
-          TableName: !Ref Smithy4sSandboxTable
+先ほど実行したコマンドを再度実行して`DynamoDB`のテーブルにレコードが作成されたことを確認してみましょう。
+
+以下のように作成したLambda関数内でputした内容と同じレコードが作成されていることが確認できます。
+
+```shell
+$ awslocal dynamodb scan --table-name Smithy4sSandboxTable
+{
+  "Items": [
+    {
+      "name": {
+        "S": "Alice"
+      },
+      "id": {
+        "S": "1"
+      }
+    }
+  ],
+  "Count": 1,
+  "ScannedCount": 1,
+  "ConsumedCapacity": null
+}
 ```
 
 # まとめ
