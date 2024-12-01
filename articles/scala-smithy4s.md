@@ -590,6 +590,49 @@ aws dynamodb scan --table-name Smithy4sSandboxTable
 
 これでScala.jsでAWS クライアントを使用してDynamoDBにレコードを追加するLambda関数を作成し、実際に動作確認を行うことができました。
 
+## Jarファイルとの比較
+
+Smithy4sとScala.jsを使用することでNode環境でAWS SDKを使用することができました。ここでJarファイルとの比較を行ってみましょう。
+
+![Jarファイルとの比較](/images/scala-smithy4s/jar-vs-node.png)
+
+上記画像からJarファイルは単純な処理であっても**32.6MB**となっており、Node.jsの**3.9MB**の**約10倍**のサイズとなっています。
+
+:::message
+メモリサイズはJavaの環境だとデフォルトの128MBでは足らないためNode, Javaともに1024MBに設定しています。
+Node.jsの場合はデフォルトの128MBでも十分な場合が多いです。
+:::
+
+また、実行時間についても以下のようになりました。
+
+**Java 実行時間**
+
+![Java 実行時間](/images/scala-smithy4s/java-execution-time.png)
+
+**Node 実行時間**
+
+![Node 実行時間](/images/scala-smithy4s/node-execution-time.png)
+
+上記画像からもわかるように、Node.jsの方がJavaよりも実行時間が短くなっていることがわかります。
+
+:::message
+今回は両方とも初回実行のみ計測しています。Lambda関数を連続で実行する場合や定期的に実行するような場合でこの結果は変わる可能性があります。
+
+初回実行が遅くなることは重々承知しておりますが、サーバレスアプリケーションを採用する場合は初回実行が重要な場合が多いためこの結果を参考にしていただければと思います。
+:::
+
+このように、Node.jsの方がJarファイルよりも軽量で実行時間も短いため、サーバーレスアプリケーションを開発する際にはNode.jsを使用するのが適していると言えます。
+
+Scala.jsを使用することで、Node.jsの軽量さとScalaの型安全性を組み合わせることができるため、サーバーレスアプリケーションの開発においても有用であると言えるのではないでしょうか。
+
+この計測で実際に使用したJarファイルを生成しているコードは以下に置いてあります。
+
+https://github.com/takapi327/smithy4s-sandbox/blob/master/functions/insert-dynamodb-jar/src/main/scala/Handler.scala
+
+:::message
+環境はScala.jsを使用したものと同じで、Jarファイルは[sbt assembly](https://github.com/sbt/sbt-assembly)を使用して生成しています。
+:::
+
 ## (おまけ) LocalStackでのテスト
 
 AWS クライアントを使用する際には、実際のAWSアカウントを使用することもできますが、テスト時やローカル環境での開発時にはLocalStackを使用することをおすすめします。
