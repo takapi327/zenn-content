@@ -1,15 +1,15 @@
 ---
-title: "smithy4sを使用したScala.jsでAWS クライアントを使う"
+title: "Smithy4sを使用したScala.jsでAWS クライアントを使う"
 emoji: "♦️"
 type: "tech"
-topics: ["Scala", "Typelevel", "AWS", "Smithy", "smithy4s"]
+topics: ["Scala", "Typelevel", "AWS", "Smithy", "Smithy4s"]
 publication_name: nextbeat
 published: false
 ---
 
-# smithy4sとは
+# Smithy4sとは
 
-smithy4sは、AWSが開発したAPI定義言語であるSmithyをScalaで扱うためのライブラリです。
+Smithy4sは、AWSが開発したAPI定義言語であるSmithyをScalaで扱うためのライブラリです。
 
 https://disneystreaming.github.io/smithy4s/
 
@@ -43,15 +43,15 @@ structure SayHelloOutput {
 }
 ```
 
-## smithy4sの主な特徴
+## Smithy4sの主な特徴
 
-smithy4sには以下のような特徴があります
+Smithy4sには以下のような特徴があります
 
 1. 型安全性
 2. 簡単な統合
 3. 開発効率の向上
 
-また、smithy4sはScala.js, Scala Native, JVMのマルチプラットフォームをサポートしています。
+また、Smithy4sはScala.js, Scala Native, JVMのマルチプラットフォームをサポートしています。
 
 現在Smithy4sは以下の用途に使用できます。
 
@@ -71,7 +71,7 @@ smithy4sには以下のような特徴があります
 
 しかし、昨今のScalaはJVMだけでなく、Scala.jsやScala Nativeといったプラットフォームをサポートしており、これらのプラットフォームではJava用のAWS SDKを利用することができません。そのため、Scala.jsやScala NativeでAWSを利用するためには、別の方法を考える必要があります。
 
-smithy4sは、Smithyを使用してAWSのAPIを定義し、ScalaでAWSクライアントを生成することができます。このため、Scala.jsやScala NativeでもAWSを利用することができます。
+Smithy4sは、Smithyを使用してAWSのAPIを定義し、ScalaでAWSクライアントを生成することができます。このため、Scala.jsやScala NativeでもAWSを利用することができます。
 
 ではどのようなユースケースでScala.jsでAWSを利用する必要があるのでしょうか？
 
@@ -173,7 +173,7 @@ https://zenn.dev/nextbeat/articles/scala-feral-lambda-function#feral%E3%82%92%E4
 - Scala: 3.5.2
 - sbt: 1.10.4
 - Feral: 0.3.1
-- smithy4s: 0.18.25
+- Smithy4s: 0.18.25
 - Node.js: 20.x
 
 sbtプロジェクトは任意のものを使用・作成してください。
@@ -191,11 +191,11 @@ $ sbt new scala/scala3.g8
 
 https://github.com/takapi327/smithy4s-sandbox
 
-## smithy4sの設定
+## Smithy4sの設定
 
-プロジェクトの準備ができたら次は、smithy4sの[公式ドキュメント](https://disneystreaming.github.io/smithy4s/docs/overview/quickstart/)を参考にsmithy4sをプロジェクトで使えるように設定を追加します。
+プロジェクトの準備ができたら次は、Smithy4sの[公式ドキュメント](https://disneystreaming.github.io/smithy4s/docs/overview/quickstart/)を参考にSmithy4sをプロジェクトで使えるように設定を追加します。
 
-sbtプロジェクトの`project/plugins.sbt`にsmithy4sのsbtプラグインを追加します。
+sbtプロジェクトの`project/plugins.sbt`にSmithy4sのsbtプラグインを追加します。
 
 ```scala
 addSbtPlugin("com.disneystreaming.smithy4s" % "smithy4s-sbt-codegen" % "0.18.25")
@@ -207,15 +207,15 @@ addSbtPlugin("com.disneystreaming.smithy4s" % "smithy4s-sbt-codegen" % "0.18.25"
 enablePlugins(Smithy4sCodegenPlugin)
 ```
 
-これでsmithy4sの設定が完了しました。
+これでSmithy4sの設定が完了しました。
 
-次に、smithy4sでAWS SDKを使用するための設定を行います。
+次に、Smithy4sでAWS SDKを使用するための設定を行います。
 
-smithy4sを使用したAWS SDKの公式ドキュメントは以下を参照してください。
+Smithy4sを使用したAWS SDKの公式ドキュメントは以下を参照してください。
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws
 
-smithy4sはAWS SDKを生成する際に内部で`http4s`のクライアントを使用しているため、AWS SDKを使用する際には`http4s`を追加する必要があります。
+Smithy4sはAWS SDKを生成する際に内部で`http4s`のクライアントを使用しているため、AWS SDKを使用する際には`http4s`を追加する必要があります。
 
 ```scala
 libraryDependencies ++= Seq(
@@ -249,7 +249,7 @@ smithy4sAwsSpecs ++= Seq(AWS.dynamodb)
 
 `smithy4sAwsSpecs`はロードするAWSモジュールのリストを保持しています。
 
-smithy4sはプラグイン内部でロードするAWSモジュールのリストに基づいて、AWS SDKを生成します。
+Smithy4sはプラグイン内部でロードするAWSモジュールのリストに基づいて、AWS SDKを生成します。
 :::message
 モジュールのリストはいくつかあって、`smithy4sAwsSpecs`はそのうちの1つです。
 :::
@@ -258,7 +258,7 @@ smithy4sはプラグイン内部でロードするAWSモジュールのリスト
 
 一方で、`AWS.dynamodb`は直接モジュールのリストに追加しています。
 
-この`AWS`オブジェクトはsmithy4sのcodegenパッケージ内で自動的に生成されたものであり、実態は以下のようになっています。
+この`AWS`オブジェクトはSmithy4sのcodegenパッケージ内で自動的に生成されたものであり、実態は以下のようになっています。
 
 ```scala
 object AwsSpecs {
@@ -278,7 +278,7 @@ object autoImport {
 }
 ```
 
-また、`AwsSpecs`は自動生成されたものであるためsmithy4sのGithubを確認しても見つけることはできません。実装内容を知りたい場合は、smithy4s.codegenプロジェクトの`target`配下に生成されたソースコードを確認する必要があります。
+また、`AwsSpecs`は自動生成されたものであるためSmithy4sのGithubを確認しても見つけることはできません。実装内容を知りたい場合は、smithy4s.codegenプロジェクトの`target`配下に生成されたソースコードを確認する必要があります。
 :::
 
 そして、プラグイン内部で以下のように`libraryDependencies`に追加していたものと同じ形式でモジュールのリストに追加しています。
@@ -294,26 +294,26 @@ Compile / smithy4sAwsSpecDependencies := {
 }
 ```
 
-このように、`smithy4sAwsSpecs`に直接モジュールを追加する場合も、`libraryDependencies`に追加する場合も最終的にはsmithy4sがコード生成するために使用する配列の中に同じ形式で追加されるため、どちらを使用しても問題ないということです。
+このように、`smithy4sAwsSpecs`に直接モジュールを追加する場合も、`libraryDependencies`に追加する場合も最終的にはSmithy4sがコード生成するために使用する配列の中に同じ形式で追加されるため、どちらを使用しても問題ないということです。
 ::::
 
-smithy4sで使用できるAWSサービスの一覧は以下を参照してください。
+Smithy4sで使用できるAWSサービスの一覧は以下を参照してください。
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws#service-summary
 
 :::message
-[公式](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws#what-is-missing-)にも記載されていますが、smithy4sでAWS SDKを使用する際は以下に注意してください。
+[公式](https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws#what-is-missing-)にも記載されていますが、Smithy4sでAWS SDKを使用する際は以下に注意してください。
 
 - ストリーミング操作（S3のputObject、getObject、KinesisのsubscribeToShardなど）は現在サポートされていない
 - サービス固有のカスタマイズは現在サポートされていない
-- AWS S3にデータを入出力するためにsmithy4sを使用すべきではない
+- AWS S3にデータを入出力するためにSmithy4sを使用すべきではない
 
 S3をなぜ使用してはいけないのについて筆者は詳しくないため、もしわかる方がいれば教えていただけると幸いです。
 :::
 
 ## AWS クライアントの生成
 
-smithy4sの設定が完了したら、AWS クライアントを生成します。今回はDynamoDBを使用してレコードの作成と取得を行うサンプルを作成します。
+Smithy4sの設定が完了したら、AWS クライアントを生成します。今回はDynamoDBを使用してレコードの作成と取得を行うサンプルを作成します。
 
 まずは、DynamoDBのAWS SDKを生成できるように以下設定を追加します。
 
@@ -339,7 +339,7 @@ target/scala-x.x.x/src_managed/main/smithy4s/com.amazonaws.dynamodb
 import com.amazonaws.dynamodb.*
 ```
 
-smithy4sでAWS SDKを使用する際は、以下のようにAWS クライアントを生成する必要があります。
+Smithy4sでAWS SDKを使用する際は、以下のようにAWS クライアントを生成する必要があります。
 
 `AwsEnvironment`はリージョンや、認証情報を保持するためのクラスです。
 
@@ -668,7 +668,7 @@ services:
 
 LocalStackを使用することで、実際のAWSアカウントを使用せずに、ローカルでAWSサービスをテストすることができます。
 
-smithy4sはLocalStackをサポートしているため、LocalStackを使用してAWS クライアントをテストすることができます。
+Smithy4sはLocalStackをサポートしているため、LocalStackを使用してAWS クライアントをテストすることができます。
 
 https://disneystreaming.github.io/smithy4s/docs/protocols/aws/localstack
 
@@ -774,7 +774,7 @@ object LocalstackClient:
     AwsClient(service, env[F](LocalstackProxy[F](client), region))
 ```
 
-公式のサンプルコードでは特定のサービス専用にクライアントを作成していましたが、今回は汎用的なクライアントを作成するために`smithy4s`の`Service`を型パラメーター(`Alg`)を指定して受け取るようにしました。
+公式のサンプルコードでは特定のサービス専用にクライアントを作成していましたが、今回は汎用的なクライアントを作成するために`Smithy4s`の`Service`を型パラメーター(`Alg`)を指定して受け取るようにしました。
 
 これで使用したいサービスに対してクライアントを生成できます。
 
@@ -788,7 +788,7 @@ object LocalstackClient:
     yield dynamodb
 ```
 
-これで`smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
+これで`Smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
 
 AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、`samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
 
