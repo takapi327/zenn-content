@@ -43,6 +43,14 @@ structure SayHelloOutput {
 }
 ```
 
+Smithyに関しては以下の記事なども参考にしてください。
+
+https://dev.classmethod.jp/articles/smihty-document-reading/
+
+https://zenn.dev/jins/articles/6a5ca8c6a67017
+
+https://zenn.dev/seumo/articles/d33581c111a6d7
+
 ## Smithy4sの主な特徴
 
 Smithy4sには以下のような特徴があります
@@ -399,6 +407,24 @@ override def apply(event: Unit, context: Context[IO], init: Init): IO[Option[Str
 
 このように、AWS クライアントを使用することで、DynamoDBに対して操作を行うことができます。
 
+試しにJavaのAWS SDKを使用したコードと比較してみましょう。
+
+```scala 3
+private val dynamodb = AmazonDynamoDBClientBuilder.defaultClient()
+
+dynamodb.putItem(
+  "Smithy4sSandboxTable",
+  Map(
+    "id" -> new AttributeValue("2"),
+    "name" -> new AttributeValue("Bob")
+  ).asJava
+)
+```
+
+どうでしょうか？ほぼ同じですよね？これはSmithy4sがAWS SDKを生成する際に、Smithyの定義に基づいて生成しているためです。
+
+Smithy4sはここから単にString型を受け取るのではなく、[Newtype](https://github.com/disneystreaming/smithy4s/blob/series/0.18/modules/core/src-2/Newtype.scala)という独自の型を使用しているため、より型安全性を保ちながらAWS SDKを使用することができます。
+
 上記の設定を追加したら、以下のコマンドを実行してScalaで作成したLambda関数をjsファイルとしてビルドします。
 
 ```shell
@@ -559,9 +585,8 @@ Lambda関数を実行すると以下のようなレスポンスが帰ってき�
 
 ```json
 {
-    "StatusCode": 200,
-    "FunctionError": "Unhandled",
-    "ExecutedVersion": "$LATEST"
+  "StatusCode": 200,
+  "ExecutedVersion": "$LATEST"
 }
 ```
 
@@ -774,7 +799,7 @@ object LocalstackClient:
     AwsClient(service, env[F](LocalstackProxy[F](client), region))
 ```
 
-公式のサンプルコードでは特定のサービス専用にクライアントを作成していましたが、今回は汎用的なクライアントを作成するために`Smithy4s`の`Service`を型パラメーター(`Alg`)を指定して受け取るようにしました。
+公式のサンプルコードでは特定のサービス専用にクライアントを作成していましたが、今回は汎用的なクライアントを作成するためにSmithy4sの`Service`を型パラメーター(`Alg`)を指定して受け取るようにしました。
 
 これで使用したいサービスに対してクライアントを生成できます。
 
@@ -788,7 +813,7 @@ object LocalstackClient:
     yield dynamodb
 ```
 
-これで`Smithy4s`を使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
+これでSmithy4sを使用して`LocalStack`でAWS クライアントを検証するための設定が完了しました。
 
 AWS SAMと`LocalStack`を使用する場合は[aws-sam-cli-local](https://github.com/localstack/aws-sam-cli-local)を使用することで、`samlocal deploy`を実行するだけで、`localstack`へデプロイできるため今回はこちらを使用します。
 
@@ -905,4 +930,8 @@ $ awslocal dynamodb scan --table-name Smithy4sSandboxTable
 }
 ```
 
+これでLocalStackを使用してもSmithy4sを使用したAWS クライアントをテストすることができました。
+
 # まとめ
+
+今回はScala.jsとSmithy4sを使用してAWS SDKを生成し、DynamoDBにレコードを追加するLambda関数を作成しました。
