@@ -2,7 +2,7 @@
 title: "Smithy4sを使用したScala.jsでAWS クライアントを使う"
 emoji: "♦️"
 type: "tech"
-topics: ["Scala", "Typelevel", "AWS", "Smithy", "Smithy4s"]
+topics: ["Scala", "AWS", "Smithy", "Smithy4s", "awslambda"]
 publication_name: nextbeat
 published: false
 ---
@@ -895,3 +895,19 @@ $ awslocal dynamodb scan --table-name Smithy4sSandboxTable
 # まとめ
 
 今回はScala.jsとSmithy4sを使用してAWS SDKを生成し、DynamoDBにレコードを追加するLambda関数を作成しました。
+
+最近JVMだけではなくScala JSやScala Nativeに対応しているライブラリが増えてきていると感じており、Scala.jsを使用してLambda関数を使用したサーバレスアプリケーションを開発しやすくなってきていると感じていました。しかし、Lambda関数を使用する際にはAWS SDKを使用することが多いため、その他のライブラリが使えたとしてもAWS SDKが使えないと採用するのは難しいかなとも感じていました。
+Scala.jsではJS用のAWS SDKを使用してfacadeを用意することもできますが、facadeを作成するのは手間がかかるためあまり積極的には使用していませんでした。
+
+そんな中今回のSmithy4sというライブラリをTypelevelのコミュニティで知り、このライブラリがAWS SDKを生成することができるということであったため実際に触ってみることにしました。
+初めはSmithy定義書からコードを生成しているということで結構イマイチなのでは？と思っていましたが、実際に触ってみると本家？のJava AWS SDKとほとんど同じようなコードが生成されておりScala.jsで使用することもできるということでかなり使いやすいと感じました。
+
+LocalStackを使用してローカル環境でも簡単に動作させられる点も個人的に良かったです。また、AWS SDKのSmithy定義からコードを生成しているためJavaのAWS SDKと比較してもほぼ同じコードなっており、これであればAPIサーバーのようなバックエンドアプリケーションでも共通してSmithy4sのAWS SDKを使用することができるのではないかと感じました。
+
+今現状で難点があるとすればよくわからないエラー(ブログ内でも書いた)がたまにあるということと、Smithy4側ではAWS SDKのコードを事前に生成していないため使用側でコード生成が発生しコンパイル時間が長くなってしまうという点があります。
+
+まあ、この問題自体は事前にコンパイルしておいたプロジェクトを公開しておくなりすれば解消できる問題なのでそこまで気にする必要はないかなとも思いました。
+
+まだまだSmithy4sは開発途中であるため今後も機能追加やバグ修正が行われると思います。筆者はScalaが好きでできるならなんでもScalaで書きたいマンなので、Scala.jsやJVMでAWS SDKを使用できるこのライブラリを今後も使っていこうかなと思っています。
+
+長くなりましたが、最後まで読んでいただきありがとうございました。
