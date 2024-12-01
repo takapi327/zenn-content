@@ -69,7 +69,7 @@ Smithy4sには以下のような特徴があります
 
 今回は上記用途の中から、Scala.jsでAWS クライアントを使う方法を紹介します。
 
-# Scala.jsでAWS クライアントを使う
+# なぜScala.jsでAWS クライアントを使うのか
 
 :::message
 少し長くなるので使い方だけ知りたいよ〜って方は「プロジェクトの作成 」まで読み飛ばしてください。
@@ -80,6 +80,10 @@ Smithy4sには以下のような特徴があります
 しかし、昨今のScalaはJVMだけでなく、Scala.jsやScala Nativeといったプラットフォームをサポートしており、これらのプラットフォームではJava用のAWS SDKを利用することができません。そのため、Scala.jsやScala NativeでAWSを利用するためには、別の方法を考える必要があります。
 
 Smithy4sは、Smithyを使用してAWSのAPIを定義し、ScalaでAWSクライアントを生成することができます。このため、Scala.jsやScala NativeでもAWSを利用することができます。
+
+:::message
+Scala.jsではTypeScriptへのfacadeを用意することでもAWS SDKを利用することができます。
+:::
 
 ではどのようなユースケースでScala.jsでAWSを利用する必要があるのでしょうか？
 
@@ -165,7 +169,7 @@ https://www.graalvm.org/
 今回の構成はScalaをすでに採用しているプロダクトでLambdaだけ別の言語で書きたくないよ〜であったり同じようなモデル定義などを2重管理したくないよ〜という場合に採用を検討すると良いかと思います。
 :::
 
-## プロジェクトの作成
+# プロジェクトの作成
 
 Scala.jsを使用してAWS Lambdaを作成するのですが、ScalaにはFeralというCats Effectを使ってScalaでサーバーレス関数を書き、FaaS(Function as a Service)基盤に適合させる便利なライブラリがあります。
 
