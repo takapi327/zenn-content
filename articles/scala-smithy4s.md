@@ -496,9 +496,103 @@ AWSへデプロイする際には認証情報が必要です。認証情報の�
 $ sam deploy
 ```
 
-## LocalStackでのテスト
+デプロイが完了したら、AWS環境のDynamoDBにテーブルが作成されているはずなのでAWS CLIを使用してレコードを取得してみましょう。
 
-AWS クライアントを使用する際には、実際のAWSアカウントを使用することもできますが、テスト時にはLocalStackを使用することをおすすめします。
+```shell
+aws dynamodb scan --table-name Smithy4sSandboxTable
+{
+    "Items": [],
+    "Count": 0,
+    "ScannedCount": 0,
+    "ConsumedCapacity": null
+}
+```
+
+::::details AWS コンソールでの確認
+AWSコンソールでDynamoDBのテーブルが作成されていることを確認できます。
+![AWS DynamoDB](/images/scala-smithy4s/aws-dynamodb.png)
+
+:::message
+AWS コンソールの画面は2024年12月時点のものです。画面が変更されている可能性があるため、最新の画面を確認してください。
+:::
+::::
+
+Lambda関数も同様にAWS CLIを使用して確認できます。
+
+```shell
+aws lambda list-functions
+{
+    "Functions": [
+        {
+            "FunctionName": "smithy4s-sandbox-InsertDynamoDB-ITah9d1K2ULS",
+            "FunctionArn": "arn:aws:lambda:ap-northeast-1:xxxxxxxxxxxx:function:smithy4s-sandbox-InsertDynamoDB-ITah9d1K2ULS",
+            "Runtime": "nodejs20.x",
+            "Role": "arn:aws:iam::xxxxxxxxxxxx:role/smithy4s-sandbox-InsertDynamoDBRole-6BkmoajkQy4O",
+            "Handler": "index.Handler",
+            "CodeSize": 4061116,
+            "Description": "",
+            "Timeout": 3,
+            "MemorySize": 128,
+```
+
+### Lambda関数の実行
+
+Lambda関数を実行するには、以下のコマンドを使用します。
+
+```shell
+aws lambda invoke --function-name smithy4s-sandbox-InsertDynamoDB-ITah9d1K2ULS --payload '{}' output.json
+```
+
+::::details AWSコンソールでの実行
+AWSコンソールからもLambda関数を実行することができます。
+
+以下画像のように空のJSONを入力してテスト実行してみましょう。
+
+![AWS Lambda](/images/scala-smithy4s/aws-lambda.png)
+
+:::message
+AWS コンソールの画面は2024年12月時点のものです。画面が変更されている可能性があるため、最新の画面を確認してください。
+:::
+::::
+
+Lambda関数を実行すると以下のようなレスポンスが帰ってきます。
+
+```json
+{
+    "StatusCode": 200,
+    "FunctionError": "Unhandled",
+    "ExecutedVersion": "$LATEST"
+}
+```
+
+ステータスコードが200で返ってきているため、正常に実行されていることがわかります。
+
+DynamoDBのテーブルを確認すると、レコードが追加されていることが確認できます。
+
+```shell
+aws dynamodb scan --table-name Smithy4sSandboxTable
+{
+    "Items": [
+        {
+            "id": {
+                "S": "1"
+            },
+            "name": {
+                "S": "Alice"
+            }
+        }
+    ],
+    "Count": 1,
+    "ScannedCount": 1,
+    "ConsumedCapacity": null
+}
+```
+
+これでScala.jsでAWS クライアントを使用してDynamoDBにレコードを追加するLambda関数を作成し、実際に動作確認を行うことができました。
+
+## (おまけ) LocalStackでのテスト
+
+AWS クライアントを使用する際には、実際のAWSアカウントを使用することもできますが、テスト時やローカル環境での開発時にはLocalStackを使用することをおすすめします。
 
 LocalStackは、AWSのローカルエミュレータで、AWSの主要なサービスをローカルで実行することができます。
 
