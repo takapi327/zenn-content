@@ -4,7 +4,7 @@ emoji: "♦️"
 type: "tech"
 topics: ["Scala", "AWS", "Smithy", "Smithy4s", "awslambda"]
 publication_name: nextbeat
-published: false
+published: true
 ---
 
 # Smithy4sとは
