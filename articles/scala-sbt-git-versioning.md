@@ -8,7 +8,7 @@ published: true
 ---
 
 :::message
-この記事は、Scala Advent Calendar 2024 5日目の記事です。
+この記事は、Scala Advent Calendar 2024 6日目の記事です。
 :::
 
 # はじめに
