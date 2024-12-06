@@ -4,11 +4,11 @@ emoji: "♦️"
 type: "tech"
 topics: ["Scala", "sbt", "sbtgit", "git"]
 publication_name: nextbeat
-published: false
+published: true
 ---
 
 :::message
-この記事は、Scala Advent Calendar 2024 x日目の記事です。
+この記事は、Scala Advent Calendar 2024 5日目の記事です。
 :::
 
 # はじめに
