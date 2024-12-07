@@ -11,6 +11,8 @@ published: true
 この記事は、Scala Advent Calendar 2024 2日目の記事です。
 :::
 
+https://qiita.com/advent-calendar/2024/scala
+
 # Smithy4sとは
 
 Smithy4sは、AWSが開発したAPI定義言語であるSmithyをScalaで扱うためのライブラリです。

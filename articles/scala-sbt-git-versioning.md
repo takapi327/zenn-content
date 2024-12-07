@@ -11,6 +11,8 @@ published: true
 この記事は、Scala Advent Calendar 2024 6日目の記事です。
 :::
 
+https://qiita.com/advent-calendar/2024/scala
+
 # はじめに
 
 今回はsbt-gitというプラグインを使用してsbtプロジェクトのバージョン管理を行う方法について紹介します。
