@@ -3,6 +3,7 @@ title: "Drizzle Studio"
 emoji: "🔥"
 type: "tech"
 topics: ["drizzleorm", "drizzlestudio", "Typescitpt", "MySQL"]
+publication_name: nextbeat
 published: false
 ---
 
