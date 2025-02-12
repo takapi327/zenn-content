@@ -59,7 +59,7 @@ await db.insert(city).values({
 
 > If you know SQL — you know Drizzle.
 
-公式が言うようにSQLを知っていればDrizzleのAPIもすぐに使いこなせると思います。
+公式が「SQLを知っていれば、Drizzleを知っている。」と言うようにSQLを知っていればDrizzleのAPIもすぐに使いこなせると思います。
 
 更にDrizzleのスキーマを定義することでzodのバリデーションスキーマが生成される点も最近のzodの流行に合わせているため、開発者にとっては非常に使いやすいライブラリだと思います。
 
@@ -69,7 +69,7 @@ https://youtu.be/i_mAHOhpBSA
 
 ## Drizzle Studio
 
-Drizzle Studioは、Drizzle ORMのスキーマをGUIで操作することができるツールです。Drizzle Studioを使用することでスキーマの追加や削除、データの追加や削除、クエリの実行などがGUIで行うことができます。
+Drizzle Studioは、GUIでDBに対して操作をすることができるツールです。Drizzle Studioを使用することでスキーマの追加や削除、データの追加や削除、クエリの実行などがGUIで行うことができます。
 
 起動自体は簡単で、Drizzleの設定さえあれば以下のコマンドだけで起動し操作することができます。
 
@@ -87,7 +87,7 @@ npx drizzle-kit studio
 
 個人的に良かった点は外部キー制約がついているレコードがJOINなどをしなくても表示することができる点です。
 
-外部キーが設定されている場合、テーブルのセルに関連するテーブル名が表示され、クリックすることで関連するテーブルのデータを表示することができます。
+外部キーが設定されている場合、テーブルのセルに関連するテーブル名が表示され、クリックすることで関連するテーブルのデータを表示することができます。 画像で言うと「cities」と「countrylanguages」が対象のセルです。
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_FOREIGN_KEY.png)
 
@@ -138,6 +138,10 @@ Drizzle Studioはテーブルのレコード一覧とスキーマ表示を切り
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_DELETE.png)
 
 ただし、この方法で変更したスキーマはアプリケーションコードには反映されないため、スキーマの変更を行った場合はアプリケーションコードにも反映する必要があります。
+
+カラムの追加・削除だけではなくテーブルおよびビュー自体の作成や削除も同様の操作で行うことができます。
+
+![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_CREATE_TABLE.png)
 
 また、直接SQLを書いて処理を行いたい場合は、「SQL runner」を選択することで任意のSQLを実行することができます。
 
