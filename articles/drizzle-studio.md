@@ -21,16 +21,12 @@ TypeScriptでデータベース操作を行うためのライブラリであるD
 
 ## Drizzle ORM
 
-Drizzle ORMは、TypeScriptでデータベース操作を行う際の優れた選択肢として注目を集めています。その最大の魅力は、型安全性と開発体験の高さにあります。開発者は、スキーマから自動的に生成される型定義により、コーディング時からデータベース操作の誤りを防ぐことができます。
+Drizzle ORMは、TypeScriptでデータベース操作を行う際の優れた選択肢として注目を集めています。その最大の魅力は型安全性と開発体験の高さにあります。開発者はスキーマから自動的に生成される型定義により、コーディング時からデータベース操作の誤りを防ぐことができます。
 
 https://orm.drizzle.team/
 
 個人的にはDrizzle ORMのAPI設計がSQLに近い形で設計されている点が気に入っています。 クエリビルダーの構文がSQL文に非常に近い形で設計されているため、学習コストを抑えながら直感的にコードを書くことができスキーマ管理やクエリ構築などもSQLの知識をそのまま活かして実装できます。
 また、SQLに近い形で設計されているためAIによるコード生成やコード補完が効きやすく、開発効率を向上させることができる点も嬉しい点です。
-
-> If you know SQL — you know Drizzle.
-
-公式が言うようにSQLを知っていればDrizzleのAPIもすぐに使いこなせると思います。
 
 **テーブルスキーマの例**
 
@@ -43,6 +39,27 @@ export const city = mysqlTable('city', {
   population: int().notNull().default(0),
 })
 ```
+
+**データ取得の例**
+
+```typescript
+const cities = await db.select().from(city).where(eq(city.name, 'Tokyo'))
+```
+
+**データ挿入の例**
+
+```typescript
+await db.insert(city).values({
+  name: 'Tokyo',
+  countryCode: 'JPN',
+  district: 'Kanto',
+  population: 13929286,
+})
+```
+
+> If you know SQL — you know Drizzle.
+
+公式が言うようにSQLを知っていればDrizzleのAPIもすぐに使いこなせると思います。
 
 更にDrizzleのスキーマを定義することでzodのバリデーションスキーマが生成される点も最近のzodの流行に合わせているため、開発者にとっては非常に使いやすいライブラリだと思います。
 
