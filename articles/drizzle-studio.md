@@ -4,7 +4,7 @@ emoji: "🔥"
 type: "tech"
 topics: ["drizzleorm", "drizzlestudio", "Typescitpt", "MySQL"]
 publication_name: nextbeat
-published: false
+published: true
 ---
 
 ## はじめに
