@@ -9,9 +9,9 @@ published: false
 
 ## はじめに
 
-今までDrizzle ORMを使ったことはありましたが、Drizzle Studioは使ったことがありませんでした 。
+TypeScriptでデータベース操作を行うためのライブラリであるDrizzle ORMを気に入って使用しているのですが、Drizzle ORMにはGUIでスキーマの操作ができるDrizzle Studioというツールがあります。
 
-これまでは開発時にDBに対して直接操作をしたい場合はMySQL ShellやWorkbenchを使用していました。しかし、Drizzle ORMを使用している場合はDrizzle Studioを使用することでGUIでDBの操作ができるということを最近知ったため試しに使ってみました。
+今まではなんやかんや開発時にDBに対して直接操作をしたい場合は、使い慣れたMySQL ShellやWorkbenchを使用していました。しかし、Drizzle Studioを使用することでGUIでDBからのレコード取得操作だけではなくスキーマの編集等もできるということを最近知ったため試しに使ってみました。
 
 使ってみると思ったよりも使い勝手がよかったので、今回はDrizzle Studioについて紹介したいと思います。
 
