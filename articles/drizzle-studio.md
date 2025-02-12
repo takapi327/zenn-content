@@ -11,7 +11,7 @@ published: false
 
 TypeScriptでデータベース操作を行うためのライブラリであるDrizzle ORMを気に入って使用しているのですが、Drizzle ORMにはGUIでDBの操作ができるDrizzle Studioというツールがあります。
 
-今まではなんやかんや開発時にDBに対して直接操作をしたい場合は、使い慣れたMySQL ShellやWorkbenchを使用していました。しかし、Drizzle Studioを使用することでGUIでDBからのレコード取得操作だけではなくスキーマの編集等もできるということを最近知ったため試しに使ってみました。
+今まではなんやかんや開発時にDBに対して直接操作をしたい場合は、使い慣れたMySQL ShellやWorkbenchを使用していました。しかし、Drizzle Studioを使用することでGUIでDBのレコード操作だけではなくスキーマの編集等もできるということを最近知ったため試しに使ってみました。
 
 使ってみると思ったよりも使い勝手がよかったので、今回はDrizzle Studioについて紹介したいと思います。
 
@@ -148,6 +148,8 @@ Drizzle Studioはテーブルのレコード一覧とスキーマ表示を切り
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_SQL.png)
 
 Drizzle Studioはこれに加えてGUI上でDrizzle ORMのスキーマを使用してクエリを実行することもできます。そのため、Studio上でコードを試して動作を確認しそのままアプリケーションコードに反映することができます。
+
+以下はDrizzle ORMのスキーマを使用してクエリを実行する例です。アプリケーション開発時にクエリ実行の部分だけ先に動作検証できるのはとても便利で良いですね。
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_QUERY.png)
 
