@@ -69,7 +69,7 @@ https://youtu.be/i_mAHOhpBSA
 
 ## Drizzle Studio
 
-Drizzle Studioは、GUIでDBに対して操作をすることができるツールです。Drizzle Studioを使用することでスキーマの追加や削除、データの追加や削除、クエリの実行などがGUIで行うことができます。
+Drizzle Studioは、GUIでDBに対して操作をすることができるツールです。Drizzle Studioを使用することでスキーマの追加や削除、データの追加や削除、クエリの実行などをGUIで行うことができます。
 
 起動自体は簡単で、Drizzleの設定さえあれば以下のコマンドだけで起動し操作することができます。
 
@@ -81,7 +81,7 @@ npx drizzle-kit studio
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO.png)
 
-レコードの追加は指定したカラムのフィールドに値を入力するだけで簡単に追加できます。
+レコードを追加するには指定したカラムのフィールドに値を入力するだけです。
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_ADD.png)
 
@@ -115,7 +115,7 @@ Drizzle Studioはテーブルのレコード一覧とスキーマ表示を切り
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_SET_COLUMN_NAME.png)
 
-次にカラムの型を選択します。カラムの方は選択肢から選択することができます。
+次にカラムの型を選択します。カラムの型は選択肢から選択することができます。
 
 ![Drizzle Studio](/images/drizzle-studio/DRIZZLE_STUDIO_SET_COLUMN_TYPE.png)
 
