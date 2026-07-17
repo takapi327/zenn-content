@@ -19,6 +19,8 @@ https://health.aws.amazon.com/health/status
 
 :::message
 記事内のリソースID、ドメイン、IPアドレスなどはマスクもしくは置き換えを行っています。また、記事内の時刻は全てJSTです。
+
+記事内のスクリーンショットに関しては、調査当時はスクショを残す余裕がなかったため、弊社の勉強用AWSアカウントで同様の環境を構築して取得したものです。当時の実際の出力とは細部が異なる場合があります。
 :::
 
 # VPC Originとは
@@ -27,7 +29,7 @@ https://health.aws.amazon.com/health/status
 
 VPC Origin (CloudFront Virtual Private Cloud origins) は2024年11月に発表されたCloudFrontの機能で、プライベートサブネットにあるALBやEC2などをCloudFrontのオリジンとして直接指定できるようになるものです。
 
-https://aws.amazon.com/jp/blogs/news/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/
+https://aws.amazon.com/jp/blogs/news/introducing-amazon-cloudfront-vpc-origins-enhanced-security-and-streamlined-operations-for-your-applications/
 
 従来の構成ではCloudFrontのオリジンにALBを指定する場合、ALBをパブリックサブネットに配置してインターネットからアクセス可能にしておく必要がありました。VPC Originを使用することでALBを完全にプライベートなまま保つことができるため、CloudFrontを経由しないアクセスを構成レベルで遮断でき、セキュリティを向上させることができます。
 
@@ -81,7 +83,7 @@ aws ec2 describe-network-interfaces --region ap-northeast-1 \
 1. **ENIが存在しin-useか** — 誰かが誤って削除していたり`failed`状態であれば構成レベルの問題であり、自分たちで直せる可能性があります
 2. **どのAZ・サブネットにあるか** — 当時はAZ障害説も残っていたため、ENIが片方のAZにしかなければ「そのAZが死んだ」で説明がつきます
 
-実際の出力は以下の通りです。
+出力結果は以下のようになります。
 
 ![DescribeNetworkInterfacesの出力結果](/images/aws-vpc-origin-outage-troubleshooting/describe-network-interfaces.png)
 
@@ -139,7 +141,7 @@ aws elbv2 describe-target-groups --region ap-northeast-1 \
 
 `describe-target-groups`で内部ALBにぶら下がる全ターゲットグループを列挙し、それぞれに対して`describe-target-health`で登録されているターゲット (ECSタスクのIP) のヘルス状態を取得しています。
 
-実際の出力は以下の通りです。
+出力結果は以下のようになります。
 
 ![DescribeTargetHealthの出力結果](/images/aws-vpc-origin-outage-troubleshooting/describe-target-health.png)
 
